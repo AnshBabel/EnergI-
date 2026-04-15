@@ -1,0 +1,96 @@
+<div class="auth-page">
+
+  <div class="auth-card" [@cardAnimation]>
+    <div class="auth-logo">
+      <div class="mark">E</div>
+      <div>
+        <div style="font-weight: 700; font-size: 18px;">EnergI</div>
+        <div style="font-size: 11px; color: var(--color-text-muted);">Smart Energy Management</div>
+      </div>
+    </div>
+
+    <div class="role-selector mb-6">
+      <button 
+        [class.active]="role === 'ADMIN'" 
+        (click)="setRole('ADMIN')"
+        class="role-btn admin">
+        <span class="icon">💼</span> Admin
+      </button>
+      <button 
+        [class.active]="role === 'CONSUMER'" 
+        (click)="setRole('CONSUMER')"
+        class="role-btn consumer">
+        <span class="icon">🏠</span> Consumer
+      </button>
+    </div>
+
+    <h1>{{ role === 'ADMIN' ? 'Admin Portal' : 'Citizen Login' }}</h1>
+    <p class="subtitle">{{ role === 'ADMIN' ? 'Manage your society energy grid' : 'View and pay your utility bills' }}</p>
+
+    <div *ngIf="error" class="alert alert-error" [@fadeSlide]>{{ error }}</div>
+
+    <form (submit)="handleSubmit($event)" [@formChange]="role">
+      <div class="form-group" *ngIf="role === 'ADMIN'">
+        <label class="form-label">Organization Slug</label>
+        <div class="input-wrapper">
+          <input
+            id="orgSlug"
+            class="form-input"
+            placeholder="e.g. green-valley"
+            [(ngModel)]="form.orgSlug"
+            name="orgSlug"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Consumer might also need slug if they aren't on a custom domain, 
+           but per user request I'll keep it simpler for consumer mode 
+           provided we have a way to handle it or we still include it.
+           I'll keep it but style it smaller. -->
+      <div class="form-group" *ngIf="role === 'CONSUMER'">
+        <label class="form-label">Society ID / Slug</label>
+        <input
+          id="consOrgSlug"
+          class="form-input"
+          placeholder="Provided by society"
+          [(ngModel)]="form.orgSlug"
+          name="orgSlug"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input
+          id="email"
+          type="email"
+          class="form-input"
+          placeholder="your@email.com"
+          [(ngModel)]="form.email"
+          name="email"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input
+          id="password"
+          type="password"
+          class="form-input"
+          placeholder="••••••••"
+          [(ngModel)]="form.password"
+          name="password"
+          required
+        />
+      </div>
+      <button id="loginBtn" type="submit" class="btn btn-primary" [class.admin-btn]="role === 'ADMIN'" [class.consumer-btn]="role === 'CONSUMER'" style="width: 100%;" [disabled]="loading">
+        {{ loading ? 'Authenticating...' : (role === 'ADMIN' ? 'Access Admin Console' : 'Sign In') }}
+      </button>
+    </form>
+
+    <p class="text-muted mt-4" style="text-align: center;">
+      New organization? <a routerLink="/register" style="color: var(--color-primary-light);">Register here</a>
+    </p>
+  </div>
+</div>

@@ -1,0 +1,94 @@
+<app-app-layout>
+  <div class="page-header" [@fadeInUp]>
+    <h1>Welcome, {{ (user?.name?.split(' ') || [])[0] }} 👋</h1>
+    <p>Consumer ID: <strong>{{ user?.consumerId }}</strong> · Meter: <strong>{{ user?.meterNumber || 'Not assigned' }}</strong></p>
+  </div>
+
+  <div *ngIf="loading" class="flex-center" style="height: 200px;">
+    <div class="spinner"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <!-- Current Bill Hero Card -->
+    <div *ngIf="latestBill" class="card mb-6" [@fadeInUp] [style.background]="isOverdue ? 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05))' : 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(167,139,250,0.05))'" [style.borderColor]="isOverdue ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.3)'">
+      <div class="flex-between">
+        <div>
+          <div class="text-muted text-sm">Current Bill — {{ latestBill.billingPeriod?.month }}/{{ latestBill.billingPeriod?.year }}</div>
+          <div [style.color]="isOverdue ? 'var(--color-danger)' : 'var(--color-primary-light)'" style="font-size: 48px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin: 8px 0;">
+            {{ formatAmount(latestBill.totalInPaise) }}
+          </div>
+          <div class="text-muted">{{ latestBill.unitsConsumed }} kWh consumed</div>
+          <div class="mt-2">
+            <span class="badge" [ngClass]="'badge-' + latestBill.status">{{ latestBill.status }}</span>
+            <span *ngIf="isOverdue" style="font-size: 12px; color: var(--color-danger); margin-left: 8px;">⚠️ Overdue since {{ latestBill.dueDate | date:'dd/MM/yyyy' }}</span>
+            <span *ngIf="!isOverdue && latestBill.status === 'UNPAID'" class="text-muted text-sm" style="margin-left: 8px;">Due {{ latestBill.dueDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+          <div *ngIf="latestBill.status === 'DISPUTED'" class="alert alert-error" style="margin: 0; padding: 6px 12px; font-size: 11px;">
+            ⚠️ Payment frozen under review
+          </div>
+          <button *ngIf="latestBill.status === 'UNPAID'" id="payNowBtn" class="btn btn-primary btn-lg" (click)="handlePay(latestBill._id)" [disabled]="paying === latestBill._id || latestBill.status === 'DISPUTED'">
+            {{ paying === latestBill._id ? 'Redirecting...' : (latestBill.status === 'DISPUTED' ? 'Payment Frozen' : '💳 Pay Now') }}
+          </button>
+          <a [href]="billService.pdfUrl(latestBill._id)" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm">
+            📄 Download PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!latestBill" class="card mb-6 empty-state">
+      <div class="icon">🎉</div>
+      <h3>No bills yet</h3>
+      <p>Your bills will appear here once generated</p>
+    </div>
+
+    <!-- Consumption Trend Chart -->
+    <div class="card mb-6" [@fadeInUp]>
+      <h3 style="margin-bottom: 24px; font-weight: 600;">Energy Usage Trend</h3>
+      <div class="chart-container" style="height: 250px; position: relative;">
+        <canvas #usageChart></canvas>
+      </div>
+      <div *ngIf="history.length === 0" class="flex-center" style="height: 100px;">
+        <p class="text-muted">Usage trends will appear here after your first few bills.</p>
+      </div>
+    </div>
+
+    <!-- Recent Bills -->
+    <div *ngIf="bills.length > 0" class="card" [@fadeInUp]>
+      <div class="flex-between mb-4">
+        <h3 style="font-weight: 600;">Recent Bills</h3>
+        <a routerLink="/consumer/bills" class="btn btn-secondary btn-sm">View All</a>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th>Units</th>
+              <th>Amount</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of bills">
+              <td>{{ b.billingPeriod?.month }}/{{ b.billingPeriod?.year }}</td>
+              <td>{{ b.unitsConsumed }} kWh</td>
+              <td><span class="amount">{{ formatAmount(b.totalInPaise) }}</span></td>
+              <td class="text-muted">{{ b.dueDate | date:'dd/MM/yyyy' }}</td>
+              <td><span class="badge" [ngClass]="'badge-' + b.status">{{ b.status }}</span></td>
+              <td>
+                <button *ngIf="b.status === 'UNPAID'" class="btn btn-primary btn-sm" (click)="handlePay(b._id)" [disabled]="paying === b._id">
+                  Pay
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</app-app-layout>

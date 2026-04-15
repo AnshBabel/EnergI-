@@ -1,0 +1,157 @@
+<app-app-layout>
+  <div class="page-header flex-between">
+    <div>
+      <h1>Bills</h1>
+      <p>Generate and manage electricity bills</p>
+    </div>
+    <div class="flex gap-2">
+      <select id="statusFilter" class="form-input" style="width: auto;" [(ngModel)]="filterStatus" (change)="load()" name="statusFilter">
+        <option value="">All Status</option>
+        <option value="UNPAID">Unpaid</option>
+        <option value="PAID">Paid</option>
+        <option value="DISPUTED">Disputed</option>
+        <option value="WAIVED">Waived</option>
+      </select>
+      <button class="btn btn-secondary" (click)="handleExport()">⬇ Export CSV</button>
+      <button class="btn btn-secondary" (click)="handleRunCycle()">⚡ Run Cycle</button>
+      <button id="generateBillBtn" class="btn btn-primary" (click)="showModal = true">+ Generate Bill</button>
+    </div>
+  </div>
+  <div *ngIf="cycleResult" class="card mb-6 animate-in" style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(124,58,237,0.05)); border: 1px solid rgba(16,185,129,0.3);">
+    <div class="flex-between mb-4">
+      <div class="flex gap-3">
+        <div class="mark" style="background: var(--color-success); padding: 8px; border-radius: 8px; color: white;">⚡</div>
+        <div>
+          <h3 style="font-size: 16px;">Billing Cycle Complete</h3>
+          <p class="text-sm">Summary of automated run</p>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" (click)="cycleResult = null">✕ Close</button>
+    </div>
+    
+    <div class="grid-3 mb-4">
+      <div class="stat-card" style="padding: 12px 16px;">
+        <div class="stat-label">Generated</div>
+        <div class="stat-value" style="font-size: 20px;">{{ cycleResult.success }}</div>
+      </div>
+      <div class="stat-card" style="padding: 12px 16px; border-color: rgba(239,68,68,0.2);">
+        <div class="stat-label">Skipped/Failed</div>
+        <div class="stat-value" style="font-size: 20px;">{{ cycleResult.failed }}</div>
+      </div>
+      <div class="stat-card" style="padding: 12px 16px;">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value" style="font-size: 20px;">{{ cycleResult.total }}</div>
+      </div>
+    </div>
+
+    <div *ngIf="cycleResult.sampleCalculation" class="card" style="background: rgba(0,0,0,0.2); border-color: var(--color-border);">
+      <h4 class="text-xs mb-2" style="text-transform: uppercase; color: var(--color-primary-light);">Sample Calculation: {{ cycleResult.sampleCalculation.consumer }}</h4>
+      <div class="flex-between text-sm mb-1">
+        <span>Units Consumed</span>
+        <span class="font-bold">{{ cycleResult.sampleCalculation.units }} kWh</span>
+      </div>
+      <div *ngFor="let step of cycleResult.sampleCalculation.breakdown" class="flex-between text-xs text-muted mb-1">
+        <span>{{ step.description }}</span>
+        <span>{{ formatAmount(step.amountInPaise) }}</span>
+      </div>
+      <div class="flex-between mt-2 pt-2" style="border-top: 1px solid var(--color-border);">
+        <span class="font-bold uppercase text-xs">Total Bill Amount</span>
+        <span class="amount">{{ formatAmount(cycleResult.sampleCalculation.total) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="flex-center" style="height: 200px;">
+    <div class="spinner"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div *ngIf="bills.length === 0" class="empty-state">
+      <div class="icon">🧾</div>
+      <h3>No bills found</h3>
+      <p>Generate bills by entering meter readings</p>
+    </div>
+
+    <div *ngIf="bills.length > 0" class="card" style="padding: 0;">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Consumer</th>
+              <th>Period</th>
+              <th>Units</th>
+              <th>Amount</th>
+              <th>Due</th>
+              <th>Status</th>
+              <th>PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of bills">
+              <td>
+                <div style="font-weight: 500;">{{ b.userId?.name || '—' }}</div>
+                <div class="text-muted">{{ b.userId?.consumerId }}</div>
+              </td>
+              <td>{{ b.billingPeriod?.month }}/{{ b.billingPeriod?.year }}</td>
+              <td>{{ b.unitsConsumed }} kWh</td>
+              <td><span class="amount">{{ formatAmount(b.totalInPaise) }}</span></td>
+              <td class="text-muted">{{ b.dueDate | date:'dd/MM/yyyy' }}</td>
+              <td><span class="badge" [ngClass]="'badge-' + b.status">{{ b.status }}</span></td>
+              <td>
+                <a [href]="billService.pdfUrl(b._id)" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm">📄 PDF</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="showModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Generate Bill</h2>
+      <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+      <form (submit)="handleGenerate($event)">
+        <div class="form-group">
+          <label class="form-label">Select Consumer</label>
+          <select id="billConsumer" class="form-select" [(ngModel)]="form.userId" name="userId" required>
+            <option value="">Choose consumer...</option>
+            <option *ngFor="let c of consumers" [value]="c._id">{{ c.name }} ({{ c.consumerId }})</option>
+          </select>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Month</label>
+            <select class="form-select" [(ngModel)]="form.billingPeriod.month" name="month" required>
+              <option *ngFor="let m of months; let i = index" [value]="i + 1">{{ m }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year</label>
+            <input type="number" class="form-input" [(ngModel)]="form.billingPeriod.year" name="year" required />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Previous Reading (kWh)</label>
+            <input id="prevReading" type="number" class="form-input" placeholder="e.g. 1200" [(ngModel)]="form.previousReading" name="previousReading" required min="0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Current Reading (kWh)</label>
+            <input id="currReading" type="number" class="form-input" placeholder="e.g. 1350" [(ngModel)]="form.currentReading" name="currentReading" required min="0" />
+          </div>
+        </div>
+        <div *ngIf="form.previousReading !== '' && form.currentReading !== '' && +form.currentReading >= +form.previousReading" class="alert alert-success">
+          Units consumed: <strong>{{ +form.currentReading - +form.previousReading }} kWh</strong>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="showModal = false">Cancel</button>
+          <button id="saveBillBtn" type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Generating...' : 'Generate Bill' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</app-app-layout>

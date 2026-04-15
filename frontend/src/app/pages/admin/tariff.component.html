@@ -1,0 +1,121 @@
+<app-app-layout>
+  <div class="page-header flex-between">
+    <div>
+      <h1>Tariff Configuration</h1>
+      <p>Manage dynamic slab-rate pricing</p>
+    </div>
+    <button id="addTariffBtn" class="btn btn-primary" (click)="showModal = true">+ New Tariff</button>
+  </div>
+
+  <div *ngIf="loading" class="flex-center" style="height: 200px;">
+    <div class="spinner"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div *ngIf="tariffs.length === 0" class="empty-state">
+      <div class="icon">⚡</div>
+      <h3>No tariff configured</h3>
+      <p>Create your first tariff to start generating bills</p>
+    </div>
+
+    <div *ngIf="tariffs.length > 0" style="display: flex; flexDirection: column; gap: 16px;">
+      <div *ngFor="let t of tariffs" class="card" [style.borderColor]="t.isActive ? 'rgba(124,58,237,0.4)' : null">
+        <div class="flex-between mb-4">
+          <div>
+            <h3 style="font-weight: 600;">
+              {{ t.name }}
+              <span *ngIf="t.isActive" class="badge badge-PAID" style="margin-left: 8px;">Active</span>
+            </h3>
+            <p class="text-muted">
+              Effective from {{ t.effectiveFrom | date:'dd/MM/yyyy' }} · Tax: {{ t.taxPercent }}% · Fixed: {{ formatPaise(t.fixedChargeInPaise) }}
+            </p>
+          </div>
+          <button *ngIf="!t.isActive" class="btn btn-success btn-sm" (click)="handleActivate(t._id)">Set Active</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Slab</th>
+                <th>Up To Units</th>
+                <th>Rate / Unit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of t.slabs; let i = index">
+                <td>Slab {{ i + 1 }}</td>
+                <td>{{ s.upToUnits ? '≤ ' + s.upToUnits + ' units' : 'Unlimited' }}</td>
+                <td>{{ formatPaise(s.rateInPaise) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="showModal = false">
+    <div class="modal" style="max-width: 560px;" (click)="$event.stopPropagation()">
+      <h2>New Tariff Config</h2>
+      <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+      <form (submit)="handleCreate($event)">
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Tariff Name</label>
+            <input id="tariffName" class="form-input" placeholder="FY 2025-26" [(ngModel)]="form.name" name="name" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Effective From</label>
+            <input type="date" class="form-input" [(ngModel)]="form.effectiveFrom" name="effectiveFrom" required />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Fixed Charge (₹)</label>
+            <input type="number" class="form-input" placeholder="0" step="0.01"
+              [ngModel]="form.fixedChargeInPaise / 100" (ngModelChange)="form.fixedChargeInPaise = Math.round($event * 100)"
+              name="fixedCharge" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tax %</label>
+            <input type="number" class="form-input" placeholder="0" step="0.01" [(ngModel)]="form.taxPercent" name="taxPercent" />
+          </div>
+        </div>
+
+        <h3 style="font-weight: 600; margin-bottom: 12px; font-size: 14px;">Slabs</h3>
+        <div *ngFor="let slab of form.slabs; let i = index" class="card mb-4" style="padding: 16px; background: rgba(255,255,255,0.03);">
+          <div class="flex-between mb-2">
+            <span class="badge" style="background: var(--color-surface-2);">Slab {{ i + 1 }}</span>
+            <button *ngIf="form.slabs.length > 1" type="button" class="btn btn-danger btn-sm" (click)="removeSlab(i)">✕ Remove</button>
+          </div>
+          <div class="grid-3" style="align-items: flex-end;">
+            <div class="form-group mb-0">
+              <label class="form-label text-xs">Min Units</label>
+              <input class="form-input" [value]="i === 0 ? 0 : (form.slabs[i-1].upToUnits ? form.slabs[i-1].upToUnits + 1 : '—')" disabled style="opacity: 0.6;" />
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label text-xs">Max Units</label>
+              <input class="form-input" type="number" placeholder="0 = Unlimited"
+                [(ngModel)]="slab.upToUnits" [name]="'slabUpTo' + i" />
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label text-xs">Rate (₹/Unit)</label>
+              <input class="form-input" type="number" placeholder="Rate" step="0.01"
+                [ngModel]="slab.rateInPaise / 100" (ngModelChange)="slab.rateInPaise = Math.round($event * 100)"
+                [name]="'slabRate' + i" />
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm mt-1" (click)="addSlab()">+ Add Slab</button>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="showModal = false">Cancel</button>
+          <button id="saveTariffBtn" type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Saving...' : 'Save Tariff' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</app-app-layout>

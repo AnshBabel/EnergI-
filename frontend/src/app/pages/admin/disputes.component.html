@@ -1,0 +1,99 @@
+<app-app-layout>
+  <div class="page-header flex-between">
+    <div>
+      <h1>Disputes</h1>
+      <p>Review and resolve consumer bill disputes</p>
+    </div>
+    <div class="flex gap-2">
+      <select class="form-input" style="width: auto;" (change)="load()" name="statusFilter">
+        <option value="">All Statuses</option>
+        <option value="OPEN">Open</option>
+        <option value="UNDER_REVIEW">Under Review</option>
+        <option value="RESOLVED">Resolved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="flex-center" style="height: 200px;">
+    <div class="spinner"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div *ngIf="disputes.length === 0" class="empty-state">
+      <div class="icon">✅</div>
+      <h3>No disputes</h3>
+      <p>All clear — no open disputes at this time</p>
+    </div>
+
+    <div *ngIf="disputes.length > 0" class="card" style="padding: 0;">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Consumer</th>
+              <th>Bill Period</th>
+              <th>Bill Amount</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of disputes">
+              <td>
+                <div style="font-weight: 500;">{{ d.userId?.name }}</div>
+                <div class="text-muted">{{ d.userId?.consumerId }}</div>
+              </td>
+              <td>{{ d.billId?.billingPeriod?.month }}/{{ d.billId?.billingPeriod?.year }}</td>
+              <td>{{ d.billId ? formatAmount(d.billId.totalInPaise) : '—' }}</td>
+              <td style="max-width: 200px;">
+                <span style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                  {{ d.reason }}
+                </span>
+              </td>
+              <td><span class="badge" [ngClass]="'badge-' + d.status">{{ d.status }}</span></td>
+              <td>
+                <div class="flex gap-2">
+                  <button *ngIf="d.status === 'OPEN'" class="btn btn-secondary btn-sm" (click)="handleSetUnderReview(d._id)">
+                    Review
+                  </button>
+                  <button *ngIf="d.status === 'OPEN' || d.status === 'UNDER_REVIEW'" [id]="'resolveBtn-' + d._id" class="btn btn-primary btn-sm" (click)="selected = d">
+                    Resolve
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Modal -->
+  <div *ngIf="selected" class="modal-overlay" (click)="selected = null">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Resolve Dispute</h2>
+      <p class="text-muted mb-4">Consumer: {{ selected.userId?.name }}<br />Reason: {{ selected.reason }}</p>
+      <form (submit)="handleResolve($event)">
+        <div class="form-group">
+          <label class="form-label">Resolution</label>
+          <select id="resolutionSelect" class="form-select" [(ngModel)]="resolveForm.resolution" name="resolution">
+            <option value="RESOLVED">Resolved — Waive the bill</option>
+            <option value="REJECTED">Rejected — Bill stands</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admin Note (visible to consumer)</label>
+          <textarea class="form-input" style="min-height: 80px; resize: vertical;" placeholder="Explain the resolution..." [(ngModel)]="resolveForm.adminNote" name="adminNote"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="selected = null">Cancel</button>
+          <button id="confirmResolveBtn" type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Saving...' : 'Confirm Resolution' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</app-app-layout>

@@ -1,0 +1,37 @@
+<app-app-layout>
+  <div class="page-header">
+    <h1>My Disputes</h1>
+    <p>Track your bill dispute requests</p>
+  </div>
+
+  <div *ngIf="loading" class="flex-center" style="height: 200px;">
+    <div class="spinner"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div *ngIf="disputes.length === 0" class="empty-state">
+      <div class="icon">✅</div>
+      <h3>No disputes raised</h3>
+      <p>You can raise disputes from the Bills page</p>
+    </div>
+
+    <div *ngIf="disputes.length > 0" style="display: flex; flex-direction: column; gap: 12px;">
+      <div *ngFor="let d of disputes" class="card">
+        <div class="flex-between mb-2">
+          <div>
+            <span style="font-weight: 600;">
+              Bill: {{ d.billId?.billingPeriod?.month }}/{{ d.billId?.billingPeriod?.year }}
+            </span>
+            <span *ngIf="d.billId" class="text-muted" style="margin-left: 8px;">({{ formatAmount(d.billId.totalInPaise) }})</span>
+          </div>
+          <span class="badge" [ngClass]="'badge-' + d.status">{{ d.status }}</span>
+        </div>
+        <p class="text-muted text-sm"><strong>Your reason:</strong> {{ d.reason }}</p>
+        <div *ngIf="d.adminNote" class="text-sm mt-2" style="padding: 8px 12px; background: var(--color-surface-2); border-radius: 6px;">
+          <strong>Admin response:</strong> {{ d.adminNote }}
+        </div>
+        <p class="text-xs text-muted mt-2">Raised on {{ d.createdAt | date:'dd/MM/yyyy' }}</p>
+      </div>
+    </div>
+  </ng-container>
+</app-app-layout>

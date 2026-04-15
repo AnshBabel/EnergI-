@@ -1,0 +1,57 @@
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">E</div>
+      <span class="logo-text">{{ org?.name || 'EnergI' }}</span>
+    </div>
+
+    <!-- Admin Nav -->
+    <nav class="sidebar-nav" *ngIf="user?.role === 'ADMIN'">
+      <p class="nav-section-label">Overview</p>
+      <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <p class="nav-section-label">Management</p>
+      <a routerLink="/admin/users" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">👥</span> Consumers
+      </a>
+      <a routerLink="/admin/tariff" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">⚡</span> Tariff Config
+      </a>
+      <a routerLink="/admin/bills" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🧾</span> Bills
+      </a>
+      <a routerLink="/admin/disputes" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">⚠️</span> Disputes
+      </a>
+    </nav>
+
+    <!-- Consumer Nav -->
+    <nav class="sidebar-nav" *ngIf="user?.role === 'CONSUMER'">
+      <p class="nav-section-label">My Account</p>
+      <a routerLink="/consumer/dashboard" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a routerLink="/consumer/bills" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🧾</span> My Bills
+      </a>
+      <a routerLink="/consumer/disputes" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📋</span> Disputes
+      </a>
+    </nav>
+
+    <div style="padding: 16px 12px; border-top: 1px solid var(--color-border); margin-top: auto;">
+      <div style="padding: 10px 12px; border-radius: 8px; background: var(--color-surface-2); margin-bottom: 8px;">
+        <div style="fontSize: 13px; fontWeight: 600;">{{ user?.name }}</div>
+        <div style="fontSize: 11px; color: var(--color-text-muted);">{{ user?.role }} · {{ user?.consumerId }}</div>
+      </div>
+      <button class="nav-item" (click)="handleLogout()" style="color: var(--color-danger); width: 100%;">
+        <span class="nav-icon">🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content animate-in">
+    <ng-content></ng-content>
+  </main>
+</div>

@@ -1,0 +1,82 @@
+<app-app-layout>
+  <div class="page-header">
+    <h1>My Bills</h1>
+    <p>Complete billing history</p>
+  </div>
+
+  <div *ngIf="loading" class="flex-center" style="height: 200px;">
+    <div class="spinner"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div *ngIf="bills.length === 0" class="empty-state">
+      <div class="icon">📄</div>
+      <h3>No bills yet</h3>
+      <p>Your bill history will appear here</p>
+    </div>
+
+    <div *ngIf="bills.length > 0" class="card" style="padding: 0;">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th>Units Consumed</th>
+              <th>Amount</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of bills">
+              <td style="font-weight: 500;">{{ b.billingPeriod?.month }}/{{ b.billingPeriod?.year }}</td>
+              <td>{{ b.unitsConsumed }} kWh</td>
+              <td><span class="amount">{{ formatAmount(b.totalInPaise) }}</span></td>
+              <td class="text-muted">{{ b.dueDate | date:'dd/MM/yyyy' }}</td>
+              <td><span class="badge" [ngClass]="'badge-' + b.status">{{ b.status }}</span></td>
+              <td>
+                <div class="flex gap-2">
+                  <a [href]="billService.pdfUrl(b._id)" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm">📄</a>
+                  <ng-container *ngIf="b.status === 'UNPAID'">
+                    <button class="btn btn-primary btn-sm" (click)="handlePay(b._id)" [disabled]="paying === b._id">
+                      {{ paying === b._id ? '...' : 'Pay' }}
+                    </button>
+                    <button [id]="'disputeBtn-' + b._id" class="btn btn-danger btn-sm" (click)="disputeModal = b">
+                      Dispute
+                    </button>
+                  </ng-container>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Modal -->
+  <div *ngIf="disputeModal" class="modal-overlay" (click)="disputeModal = null">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Raise Dispute</h2>
+      <p class="text-muted mb-4">
+        Bill for {{ disputeModal.billingPeriod?.month }}/{{ disputeModal.billingPeriod?.year }} — {{ formatAmount(disputeModal.totalInPaise) }}
+      </p>
+      <form (submit)="handleDispute($event)">
+        <div class="form-group">
+          <label class="form-label">Reason for dispute</label>
+          <textarea id="disputeReason" class="form-input" style="min-height: 100px; resize: vertical;"
+            placeholder="Describe the issue with this bill..."
+            [(ngModel)]="disputeReason" name="disputeReason"
+            required minlength="20"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="disputeModal = null">Cancel</button>
+          <button id="submitDisputeBtn" type="submit" class="btn btn-danger" [disabled]="disputeSaving">
+            {{ disputeSaving ? 'Submitting...' : 'Submit Dispute' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</app-app-layout>

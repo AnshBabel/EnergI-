@@ -1,0 +1,87 @@
+import * as billService from '../services/billService.js';
+import * as userService from '../services/userService.js';
+import { generateBillPdf } from '../utils/pdfService.js';
+import { exportBillsCsv } from '../utils/exportService.js';
+import Organization from '../models/Organization.js';
+
+export const generate = async (req, res, next) => {
+  try {
+    const bill = await billService.generateBill(
+      req.user.organizationId,
+      req.params.userId,
+      req.body
+    );
+    res.status(201).json({ bill });
+  } catch (err) { next(err); }
+};
+
+export const listByOrg = async (req, res, next) => {
+  try {
+    const result = await billService.getBillsByOrg(req.user.organizationId, req.query);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const listByUser = async (req, res, next) => {
+  try {
+    const userId = req.user.role === 'ADMIN' ? req.params.userId : req.user.userId;
+    const result = await billService.getBillsByUser(req.user.organizationId, userId, req.query);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const getOne = async (req, res, next) => {
+  try {
+    const bill = await billService.getBillById(req.user.organizationId, req.params.id);
+    res.json({ bill });
+  } catch (err) { next(err); }
+};
+
+export const analytics = async (req, res, next) => {
+  try {
+    const data = await billService.getOrgAnalytics(req.user.organizationId);
+    res.json(data);
+  } catch (err) { next(err); }
+};
+
+export const downloadPdf = async (req, res, next) => {
+  try {
+    const bill = await billService.getBillById(req.user.organizationId, req.params.id);
+    const [user, org] = await Promise.all([
+      userService.getConsumerById(req.user.organizationId, bill.userId._id || bill.userId),
+      Organization.findById(req.user.organizationId),
+    ]);
+    generateBillPdf(bill, user, org, res);
+  } catch (err) { next(err); }
+};
+
+export const exportCsv = async (req, res, next) => {
+  try {
+    const { bills } = await billService.getBillsByOrg(req.user.organizationId, { limit: 1000 });
+    exportBillsCsv(bills, res);
+  } catch (err) { next(err); }
+};
+
+export const history = async (req, res, next) => {
+  try {
+    const data = await billService.getOrgHistory(req.user.organizationId);
+    res.json(data);
+  } catch (err) { next(err); }
+};
+
+import * as cronService from '../services/cronService.js';
+
+export const runCycle = async (req, res, next) => {
+  try {
+    const { month, year } = req.body;
+    const result = await cronService.runBillingCycle(req.user.organizationId, { month, year });
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const userHistory = async (req, res, next) => {
+  try {
+    const data = await billService.getUserHistory(req.user.organizationId, req.user.userId);
+    res.json(data);
+  } catch (err) { next(err); }
+};

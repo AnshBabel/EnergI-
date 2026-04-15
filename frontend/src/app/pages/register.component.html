@@ -1,0 +1,104 @@
+<div class="auth-page">
+
+  <div class="auth-card" style="max-width: 520px;" [@cardAnimation]>
+    <div class="auth-logo">
+      <div class="mark">E</div>
+      <div>
+        <div style="font-weight: 700; font-size: 18px;">EnergI</div>
+        <div style="font-size: 11px; color: var(--color-text-muted);">Enrollment Portal</div>
+      </div>
+    </div>
+
+    <div class="role-selector mb-6">
+      <button 
+        [class.active]="role === 'ADMIN'" 
+        (click)="role = 'ADMIN'; step = 1"
+        class="role-btn admin">
+        <span class="icon">🏘️</span> New Society
+      </button>
+      <button 
+        [class.active]="role === 'CONSUMER'" 
+        (click)="role = 'CONSUMER'; step = 1"
+        class="role-btn consumer">
+        <span class="icon">👤</span> Consumer Account
+      </button>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="flex gap-2 mb-6" *ngIf="role === 'ADMIN'">
+      <div *ngFor="let s of [1, 2]" [style.background]="step >= s ? 'var(--color-primary)' : 'var(--color-border)'" style="height: 3px; flex: 1; border-radius: 99px; transition: background 0.3s;"></div>
+    </div>
+
+    <h1>{{ role === 'ADMIN' ? (step === 1 ? 'Your Organization' : 'Admin Credentials') : 'Join Organization' }}</h1>
+    <p class="subtitle">{{ role === 'ADMIN' ? 'Set up a new energy management node' : 'Enter your details to join an existing energy grid' }}</p>
+
+    <div *ngIf="error" class="alert alert-error" [@fadeSlide]>{{ error }}</div>
+
+    <form (submit)="handleSubmit($event)" [@formChange]="role + '-' + step">
+      <!-- ADMIN STEP 1: Org Details -->
+      <ng-container *ngIf="role === 'ADMIN' && step === 1">
+        <div class="form-group">
+          <label class="form-label">Organization Name</label>
+          <input class="form-input" placeholder="e.g. Green Valley CHS" [(ngModel)]="form.orgName" (ngModelChange)="onOrgNameChange()" name="orgName" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL Slug</label>
+          <input class="form-input" placeholder="green-valley" [(ngModel)]="form.orgSlug" (ngModelChange)="onSlugChange()" name="orgSlug" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Email</label>
+          <input type="email" class="form-input" placeholder="admin@society.com" [(ngModel)]="form.contactEmail" name="contactEmail" required />
+        </div>
+      </ng-container>
+
+      <!-- ADMIN STEP 2: Admin Details -->
+      <ng-container *ngIf="role === 'ADMIN' && step === 2">
+        <div class="form-group">
+          <label class="form-label">Your Full Name</label>
+          <input class="form-input" placeholder="Full name" [(ngModel)]="form.name" name="name" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admin Email</label>
+          <input type="email" class="form-input" placeholder="your@email.com" [(ngModel)]="form.email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Secure Password</label>
+          <input type="password" class="form-input" placeholder="Min 8 characters" [(ngModel)]="form.password" name="password" required minLength="8" />
+        </div>
+      </ng-container>
+
+      <!-- CONSUMER FLOW: Join -->
+      <ng-container *ngIf="role === 'CONSUMER'">
+        <div class="form-group">
+          <label class="form-label">Society ID / Slug</label>
+          <input class="form-input" placeholder="Ask your admin for the slug" [(ngModel)]="form.orgSlug" name="orgSlug" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input class="form-input" placeholder="Consumer name" [(ngModel)]="form.name" name="name" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" placeholder="consumer@email.com" [(ngModel)]="form.email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" placeholder="Min 8 characters" [(ngModel)]="form.password" name="password" required minLength="8" />
+        </div>
+      </ng-container>
+
+      <div class="flex gap-2">
+        <button *ngIf="role === 'ADMIN' && step === 2" type="button" class="btn btn-secondary" (click)="step = 1" style="flex: 1;">
+          ← Back
+        </button>
+        <button id="nextBtn" type="submit" class="btn btn-primary" [class.admin-btn]="role === 'ADMIN'" [class.consumer-btn]="role === 'CONSUMER'" style="flex: 1;" [disabled]="loading">
+          {{ role === 'ADMIN' && step === 1 ? 'Next Step' : (loading ? 'Processing...' : (role === 'ADMIN' ? 'Complete Setup' : 'Join Grid')) }}
+        </button>
+      </div>
+    </form>
+
+    <p class="text-muted mt-4" style="text-align: center;">
+      Already in? <a routerLink="/login" style="color: var(--color-primary-light);">Sign in</a>
+    </p>
+  </div>
+</div>
