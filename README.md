@@ -159,3 +159,4 @@ See `backend/.env.example` for the complete list. Required:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `RESEND_API_KEY`
+# EnergI-
