@@ -9,7 +9,10 @@ export class AuthService {
 
   constructor(private http: HttpClient, private authState: AuthState) {}
 
-  register(data: any): Observable<any> {
+  /**
+   * Updated to accept FormData to support Logo and Signature uploads
+   */
+  register(data: FormData | any): Observable<any> {
     return this.http.post<any>(`${this.base}/register`, data).pipe(
       tap((res) => {
         localStorage.setItem('accessToken', res.accessToken);
@@ -50,6 +53,9 @@ export class AuthService {
       this.authState.setLoading(false);
       return;
     }
+    
+    // Using toPromise() is fine for init, but ensure the backend
+    // /org/branding endpoint is updated to return the new fields
     Promise.all([
       this.me().toPromise(),
       this.http.get<any>('/api/v1/org/branding').toPromise(),
@@ -67,6 +73,10 @@ export class AuthService {
       });
   }
 
+  /**
+   * Applies the brand color to the CSS root variable. 
+   * This handles the "Primary Color" part of your branding logic.
+   */
   private applyBranding(org: Org | null): void {
     if (org?.primaryColor) {
       document.documentElement.style.setProperty('--color-primary', org.primaryColor);

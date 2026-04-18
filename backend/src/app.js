@@ -27,7 +27,7 @@ app.use(cors({
 
 // Raw body for Stripe webhook (must come before express.json())
 app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
-
+app.use('/uploads', express.static('uploads'));
 // Body parsing
 app.use(express.json());
 app.use(cookieParser());

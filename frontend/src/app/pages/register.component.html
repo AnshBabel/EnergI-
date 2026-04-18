@@ -1,5 +1,4 @@
 <div class="auth-page">
-
   <div class="auth-card" style="max-width: 520px;" [@cardAnimation]>
     <div class="auth-logo">
       <div class="mark">E</div>
@@ -24,9 +23,11 @@
       </button>
     </div>
 
-    <!-- Step indicator -->
     <div class="flex gap-2 mb-6" *ngIf="role === 'ADMIN'">
-      <div *ngFor="let s of [1, 2]" [style.background]="step >= s ? 'var(--color-primary)' : 'var(--color-border)'" style="height: 3px; flex: 1; border-radius: 99px; transition: background 0.3s;"></div>
+      <div *ngFor="let s of [1, 2]" 
+           [style.background]="step >= s ? 'var(--color-primary)' : 'var(--color-border)'" 
+           style="height: 3px; flex: 1; border-radius: 99px; transition: background 0.3s;">
+      </div>
     </div>
 
     <h1>{{ role === 'ADMIN' ? (step === 1 ? 'Your Organization' : 'Admin Credentials') : 'Join Organization' }}</h1>
@@ -35,7 +36,7 @@
     <div *ngIf="error" class="alert alert-error" [@fadeSlide]>{{ error }}</div>
 
     <form (submit)="handleSubmit($event)" [@formChange]="role + '-' + step">
-      <!-- ADMIN STEP 1: Org Details -->
+      
       <ng-container *ngIf="role === 'ADMIN' && step === 1">
         <div class="form-group">
           <label class="form-label">Organization Name</label>
@@ -49,9 +50,29 @@
           <label class="form-label">Contact Email</label>
           <input type="email" class="form-input" placeholder="admin@society.com" [(ngModel)]="form.contactEmail" name="contactEmail" required />
         </div>
+
+        <div class="branding-section p-4 rounded-lg bg-surface-2 border border-dashed border-border mb-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-muted mb-3">Branding (Optional)</p>
+          
+          <div class="form-group">
+            <label class="form-label">Organization Logo</label>
+            <input type="file" (change)="onFileChange($event, 'logo')" accept="image/*" class="form-input file-input" />
+            <small class="text-muted text-xs">Used on bills and dashboard sidebar.</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Authorized Signature</label>
+            <input type="file" (change)="onFileChange($event, 'signature')" accept="image/*" class="form-input file-input" />
+            <small class="text-muted text-xs">Used to digitally sign generated bills.</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Bill Footer Text</label>
+            <textarea class="form-input" rows="2" placeholder="e.g. For support call +91..." [(ngModel)]="form.footerText" name="footerText"></textarea>
+          </div>
+        </div>
       </ng-container>
 
-      <!-- ADMIN STEP 2: Admin Details -->
       <ng-container *ngIf="role === 'ADMIN' && step === 2">
         <div class="form-group">
           <label class="form-label">Your Full Name</label>
@@ -67,7 +88,6 @@
         </div>
       </ng-container>
 
-      <!-- CONSUMER FLOW: Join -->
       <ng-container *ngIf="role === 'CONSUMER'">
         <div class="form-group">
           <label class="form-label">Society ID / Slug</label>
@@ -91,7 +111,10 @@
         <button *ngIf="role === 'ADMIN' && step === 2" type="button" class="btn btn-secondary" (click)="step = 1" style="flex: 1;">
           ← Back
         </button>
-        <button id="nextBtn" type="submit" class="btn btn-primary" [class.admin-btn]="role === 'ADMIN'" [class.consumer-btn]="role === 'CONSUMER'" style="flex: 1;" [disabled]="loading">
+        <button id="nextBtn" type="submit" class="btn btn-primary" 
+                [class.admin-btn]="role === 'ADMIN'" 
+                [class.consumer-btn]="role === 'CONSUMER'" 
+                style="flex: 1;" [disabled]="loading">
           {{ role === 'ADMIN' && step === 1 ? 'Next Step' : (loading ? 'Processing...' : (role === 'ADMIN' ? 'Complete Setup' : 'Join Grid')) }}
         </button>
       </div>
