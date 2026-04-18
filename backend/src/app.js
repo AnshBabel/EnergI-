@@ -19,6 +19,8 @@ const app = express();
 // Security headers
 app.use(helmet());
 
+app.use('/uploads', express.static('uploads'));
+
 // CORS
 app.use(cors({
   origin: env.FRONTEND_URL,

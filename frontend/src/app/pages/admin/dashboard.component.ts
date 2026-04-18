@@ -1,11 +1,11 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BillService } from '../../services/bill.service';
 import { AuthState, User } from '../../state/auth.state';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs'; // Added Subscription for cleanup
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -32,10 +32,9 @@ Chart.register(...registerables);
         ], { optional: true })
       ])
     ])
-  ],
-  styles: []
+  ]
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('statsChart') statsChart!: ElementRef<HTMLCanvasElement>;
   
   analytics: any = null;
@@ -44,6 +43,7 @@ export class DashboardComponent implements OnInit {
   recentBills: any[] = [];
   loading = true;
   chart: any;
+  private sub = new Subscription(); // To prevent memory leaks
 
   constructor(
     private billService: BillService,
@@ -51,7 +51,13 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authState.user$.subscribe(u => this.user = u);
+    this.sub.add(this.authState.user$.subscribe(u => this.user = u));
+    
+    this.loadDashboardData();
+  }
+
+  loadDashboardData(): void {
+    this.loading = true;
     forkJoin({
       analytics: this.billService.analytics(),
       bills: this.billService.listAll({ limit: 5 }),
@@ -59,14 +65,17 @@ export class DashboardComponent implements OnInit {
     }).subscribe({
       next: (res) => {
         this.analytics = res.analytics;
-        this.recentBills = res.bills.bills || [];
-        this.history = res.history;
+        this.recentBills = res.bills?.bills || [];
+        this.history = res.history || [];
         
-        // Use a slight timeout to ensure view is ready
-        setTimeout(() => this.initChart(), 0);
+        // Safety Guard: Only init chart if we have history data and the view is ready
+        if (this.history.length > 0) {
+          setTimeout(() => this.initChart(), 100);
+        }
       },
       error: (err) => {
         console.error('Failed to load dashboard data', err);
+        this.loading = false;
       },
       complete: () => {
         this.loading = false;
@@ -75,14 +84,20 @@ export class DashboardComponent implements OnInit {
   }
 
   initChart(): void {
-    if (!this.statsChart) return;
+    // Permanent Fix 1: Check if canvas exists and history has items
+    if (!this.statsChart || !this.history.length) return;
 
     const ctx = this.statsChart.nativeElement.getContext('2d');
     if (!ctx) return;
 
+    // Destroy existing chart if it exists (prevents ghosting/memory leaks)
+    if (this.chart) {
+      this.chart.destroy();
+    }
+
     const labels = this.history.map(h => `${h._id.month}/${h._id.year}`);
-    const collectedData = this.history.map(h => h.collected / 100);
-    const pendingData = this.history.map(h => h.pending / 100);
+    const collectedData = this.history.map(h => (h.collected || 0) / 100);
+    const pendingData = this.history.map(h => (h.pending || 0) / 100);
 
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(124, 58, 237, 0.4)');
@@ -128,7 +143,10 @@ export class DashboardComponent implements OnInit {
           y: {
             beginAtZero: true,
             grid: { color: 'rgba(255,255,255,0.05)' },
-            ticks: { color: '#64748b' }
+            ticks: { 
+              color: '#64748b',
+              callback: (value) => '₹' + value 
+            }
           },
           x: {
             grid: { display: false },
@@ -139,8 +157,13 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.chart) this.chart.destroy();
+    this.sub.unsubscribe();
+  }
+
   formatAmount(paise: number): string {
+    if (!paise && paise !== 0) return '₹0.00';
     return `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   }
 }
-

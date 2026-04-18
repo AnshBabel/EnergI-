@@ -14,11 +14,18 @@ export const register = async (req, res, next) => {
   try {
     let user, org, tokens;
     
-    // Multer attaches files to req.files
+    // Multer attaches files to req.files. 
+    // We wrap this in a safety check to avoid "undefined" errors.
     const files = {
       logo: req.files?.logo?.[0] || null,
       signature: req.files?.signature?.[0] || null
     };
+
+    // PERMANENT FIX: Ensure we have a body. 
+    // If req.body is empty, it means the multipart middleware failed or headers are wrong.
+    if (!req.body || Object.keys(req.body).length === 0) {
+      throw Object.assign(new Error('Registration data is missing. Please check your form submission.'), { status: 400 });
+    }
 
     if (req.body.role === 'CONSUMER') {
       org = await Organization.findOne({ slug: req.body.orgSlug });
@@ -30,24 +37,34 @@ export const register = async (req, res, next) => {
       });
       tokens = generateTokens(user._id.toString(), org._id.toString(), user.role);
     } else {
-      // FIX: Explicitly map fields from req.body to prevent ValidationErrors
-      const result = await authService.registerAdmin({
-        name: req.body.name,
+      // PERMANENT FIX: Explicit mapping with detailed fallbacks.
+      // This ensures that even if the frontend key changes, we catch it here.
+      const adminData = {
+        name: req.body.name || req.body.fullName, // Support both naming conventions
         email: req.body.email,
         password: req.body.password,
         orgName: req.body.orgName,
         orgSlug: req.body.orgSlug,
-        contactEmail: req.body.contactEmail,
-        footerText: req.body.footerText,
+        contactEmail: req.body.contactEmail || req.body.email, // Fallback to admin email
+        footerText: req.body.footerText || '',
         logo: files.logo,
         signature: files.signature
-      });
+      };
+
+      // Safety Guard: Check required fields before sending to service
+      if (!adminData.name || !adminData.email) {
+        throw Object.assign(new Error(`Missing required fields: ${!adminData.name ? 'Name ' : ''}${!adminData.email ? 'Email' : ''}`), { status: 400 });
+      }
+
+      const result = await authService.registerAdmin(adminData);
       user = result.user;
       org = result.org;
       tokens = result.tokens;
     }
 
+    // Set refresh token in secure cookie
     res.cookie('refreshToken', tokens.refreshToken, COOKIE_OPTIONS);
+    
     res.status(201).json({
       message: 'Account created successfully',
       accessToken: tokens.accessToken,
@@ -55,6 +72,7 @@ export const register = async (req, res, next) => {
       org,
     });
   } catch (err) {
+    // This will now catch the "Missing required fields" or "Validation" errors clearly
     next(err);
   }
 };
