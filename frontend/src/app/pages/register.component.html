@@ -84,7 +84,20 @@
         </div>
         <div class="form-group">
           <label class="form-label">Secure Password</label>
-          <input type="password" class="form-input" placeholder="Min 8 characters" [(ngModel)]="form.password" name="password" required minLength="8" />
+          <div class="input-wrapper" style="position: relative;">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              class="form-input" 
+              placeholder="Min 8 characters" 
+              [(ngModel)]="form.password" 
+              name="password" 
+              style="padding-right: 40px;"
+              required minLength="8" 
+            />
+            <button type="button" class="password-toggle" (click)="togglePassword()">
+              {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
         </div>
       </ng-container>
 
@@ -103,7 +116,20 @@
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input type="password" class="form-input" placeholder="Min 8 characters" [(ngModel)]="form.password" name="password" required minLength="8" />
+          <div class="input-wrapper" style="position: relative;">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              class="form-input" 
+              placeholder="Min 8 characters" 
+              [(ngModel)]="form.password" 
+              name="password" 
+              style="padding-right: 40px;"
+              required minLength="8" 
+            />
+            <button type="button" class="password-toggle" (click)="togglePassword()">
+              {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
         </div>
       </ng-container>
 

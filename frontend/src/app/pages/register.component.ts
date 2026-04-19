@@ -36,6 +36,25 @@ import { AuthService } from '../services/auth.service';
     .role-btn.active { background: var(--color-surface); color: var(--color-text); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
     .role-btn.admin.active { color: var(--color-primary-light); }
     .role-btn.consumer.active { color: #10B981; }
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: color 0.2s;
+    }
+    .password-toggle:hover {
+      color: var(--color-text);
+    }
   `]
 })
 export class RegisterComponent {
@@ -59,8 +78,13 @@ export class RegisterComponent {
 
   error = '';
   loading = false;
+  showPassword = false;
 
   constructor(private authService: AuthService, private router: Router) {}
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
 
   // --- File Handlers ---
   onFileChange(event: any, type: 'logo' | 'signature'): void {

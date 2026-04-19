@@ -74,15 +74,21 @@
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
-        <input
-          id="password"
-          type="password"
-          class="form-input"
-          placeholder="••••••••"
-          [(ngModel)]="form.password"
-          name="password"
-          required
-        />
+        <div class="input-wrapper" style="position: relative;">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            class="form-input"
+            placeholder="••••••••"
+            [(ngModel)]="form.password"
+            name="password"
+            style="padding-right: 40px;"
+            required
+          />
+          <button type="button" class="password-toggle" (click)="togglePassword()">
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
       </div>
       <button id="loginBtn" type="submit" class="btn btn-primary" [class.admin-btn]="role === 'ADMIN'" [class.consumer-btn]="role === 'CONSUMER'" style="width: 100%;" [disabled]="loading">
         {{ loading ? 'Authenticating...' : (role === 'ADMIN' ? 'Access Admin Console' : 'Sign In') }}

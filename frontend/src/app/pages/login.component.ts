@@ -72,6 +72,25 @@ import { AuthService } from '../services/auth.service';
     .consumer-btn {
       background: linear-gradient(135deg, #10B981, #059669);
     }
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: color 0.2s;
+    }
+    .password-toggle:hover {
+      color: var(--color-text);
+    }
   `]
 })
 export class LoginComponent {
@@ -79,8 +98,13 @@ export class LoginComponent {
   form = { email: '', password: '', orgSlug: '' };
   error = '';
   loading = false;
+  showPassword = false;
 
   constructor(private authService: AuthService, private router: Router) {}
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {

@@ -73,7 +73,17 @@ export const registerAdmin = async ({
 };
 
 // Logic for Consumer, Login, and Refresh remain unchanged but benefit from cleaner error bubbling
-export const registerConsumer = async ({ name, email, password, organizationId, meterNumber, address, phone }) => {
+export const registerConsumer = async ({ 
+  name, 
+  email, 
+  password, 
+  organizationId, 
+  meterNumber, 
+  address, 
+  phone,
+  isSmartMeterEnabled,
+  consumptionRate
+}) => {
   const existingUser = await User.findOne({ organizationId, email });
   if (existingUser) throw Object.assign(new Error('Email already in use in this organization'), { status: 409 });
 
