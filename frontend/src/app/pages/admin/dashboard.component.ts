@@ -75,7 +75,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         // Safety Guard: Only init charts if possible
         setTimeout(() => {
           this.initChart();
-          this.initPieChart();
+          this.initRevenueChart();
         }, 100);
       },
       error: (err) => {
@@ -162,29 +162,43 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  initPieChart(): void {
+  initRevenueChart(): void {
     if (!this.revenueChart || !this.analytics?.revenueMix) return;
     const ctx = this.revenueChart.nativeElement.getContext('2d');
     if (!ctx) return;
 
     if (this.pieChart) this.pieChart.destroy();
 
+    const data = this.analytics.revenueMix.map((m: any) => (m.value || 0) / 100);
+    const backgroundColors = this.analytics.revenueMix.map((m: any) => m.color);
+
     this.pieChart = new Chart(ctx, {
-      type: 'doughnut',
+      type: 'bar',
       data: {
-        labels: this.analytics.revenueMix.map((m: any) => m.label),
-        datasets: [{
-          data: this.analytics.revenueMix.map((m: any) => (m.value || 0) / 100),
-          backgroundColor: this.analytics.revenueMix.map((m: any) => m.color),
-          borderWidth: 0,
-          hoverOffset: 10
-        }]
+        labels: ['Collections Progress'],
+        datasets: this.analytics.revenueMix.map((m: any, i: number) => ({
+          label: m.label,
+          data: [(m.value || 0) / 100],
+          backgroundColor: m.color,
+          borderRadius: i === 0 ? { topLeft: 10, bottomLeft: 10 } : i === 2 ? { topRight: 10, bottomRight: 10 } : 0,
+          barThickness: 40
+        }))
       },
       options: {
+        indexAxis: 'y',
         responsive: true,
-        cutout: '70%',
+        maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 20 } }
+          legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 20 } },
+          tooltip: {
+            callbacks: {
+              label: (item: any) => `${item.dataset.label}: ₹${item.raw.toLocaleString('en-IN')}`
+            }
+          }
+        },
+        scales: {
+          x: { stacked: true, display: false },
+          y: { stacked: true, display: false }
         }
       }
     });

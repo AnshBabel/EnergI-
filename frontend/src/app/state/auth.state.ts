@@ -11,6 +11,9 @@ export interface User {
   phone?: string;
   address?: string;
   isActive?: boolean;
+  isSmartMeterEnabled?: boolean;
+  lastKnownReading?: number;
+  consumptionRate?: number;
   createdAt?: string;
 }
 

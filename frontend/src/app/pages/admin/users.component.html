@@ -29,6 +29,7 @@
               <th>Consumer ID</th>
               <th>Meter No.</th>
               <th>Phone</th>
+              <th>IoT Status</th>
               <th>Status</th>
               <th>Joined</th>
             </tr>
@@ -42,6 +43,12 @@
               <td><code style="background: var(--color-surface-2); padding: 2px 8px; border-radius: 4px; font-size: 12px;">{{ u.consumerId }}</code></td>
               <td class="text-muted">{{ u.meterNumber || '—' }}</td>
               <td class="text-muted">{{ u.phone || '—' }}</td>
+              <td>
+                <span *ngIf="u.isSmartMeterEnabled" class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2);">
+                  📡 SMART
+                </span>
+                <span *ngIf="!u.isSmartMeterEnabled" class="text-muted" style="font-size: 11px;">Manual</span>
+              </td>
               <td>
                 <span class="badge" [ngClass]="u.isActive ? 'badge-PAID' : 'badge-WAIVED'">
                   {{ u.isActive ? 'Active' : 'Inactive' }}
@@ -87,6 +94,28 @@
           <div class="form-group">
             <label class="form-label">Address</label>
             <input id="consumerAddress" class="form-input" placeholder="Flat / Block" [(ngModel)]="form.address" name="address" />
+          </div>
+        </div>
+
+        <!-- NEW: SMART METER SECTION -->
+        <div class="card" style="background: rgba(16, 185, 129, 0.05); border: 1px dashed rgba(16, 185, 129, 0.2); margin-top: 16px;">
+          <div class="flex-between">
+            <div style="display:flex; align-items:center; gap: 12px;">
+              <span style="font-size: 24px;">📡</span>
+              <div>
+                <div style="font-weight: 700; color: #065F46; font-size: 14px;">Smart Meter Enablement</div>
+                <div class="text-muted text-xs">Activate real-time IoT consumption tracking.</div>
+              </div>
+            </div>
+            <label class="toggle-switch-container" style="display: flex; align-items: center; cursor: pointer;">
+              <input type="checkbox" [(ngModel)]="form.isSmartMeterEnabled" name="isSmartMeterEnabled" style="width: 20px; height: 20px; cursor: pointer;" />
+            </label>
+          </div>
+
+          <div *ngIf="form.isSmartMeterEnabled" class="mt-4" style="border-top: 1px solid rgba(16, 185, 129, 0.1); padding-top: 12px;">
+            <label class="form-label" style="color: #065F46;">Virtual Consumption Rate (Units/Hour)</label>
+            <input type="number" step="0.1" class="form-input" [(ngModel)]="form.consumptionRate" name="consumptionRate" />
+            <p class="text-xs text-muted mt-1">Defines how fast the meter ticks up in simulation mode.</p>
           </div>
         </div>
         <div class="modal-footer">

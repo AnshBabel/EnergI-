@@ -55,6 +55,10 @@ export class DashboardComponent implements OnInit {
   paying: string | null = null;
   chart: any;
   private sub = new Subscription();
+  
+  // Real-time meter ticking
+  liveReading: number = 0;
+  meterInterval: any;
 
   constructor(
     private authState: AuthState,
@@ -64,12 +68,33 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.sub.add(this.authState.user$.subscribe(user => this.user = user));
+    this.sub.add(this.authState.user$.subscribe(user => {
+      this.user = user;
+      if (user?.lastKnownReading) {
+        this.liveReading = user.lastKnownReading;
+      }
+      this.setupLiveMeter();
+    }));
     
     // Watch for showcase mode toggle
     this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
       this.loadDashboard();
     }));
+  }
+
+  setupLiveMeter(): void {
+    if (this.meterInterval) clearInterval(this.meterInterval);
+    
+    // Only tick if smart meter is enabled
+    if (this.user?.isSmartMeterEnabled) {
+      this.meterInterval = setInterval(() => {
+        // Match the backend logic: (Rate / 3600) * ticks
+        // Let's just tick every 1s for a smooth UI feel
+        const rate = this.user?.consumptionRate || 0.2;
+        const tickIncrement = (rate / 3600) * 60; // 60x multiplier for demo
+        this.liveReading += tickIncrement + (Math.random() * 0.0001);
+      }, 1000);
+    }
   }
 
   loadDashboard(): void {

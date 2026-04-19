@@ -1,7 +1,7 @@
 <app-app-layout>
   <div class="page-header" [@fadeInUp]>
-    <h1>Welcome, {{ (user?.name?.split(' ') || [])[0] }} 👋</h1>
-    <p>Consumer ID: <strong>{{ user?.consumerId }}</strong> · Meter: <strong>{{ user?.meterNumber || 'Not assigned' }}</strong></p>
+    <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -1px; margin: 0;">Welcome, {{ user?.name }} 👋</h1>
+    <p class="text-muted" style="margin-top: 4px;">Managing your energy for <strong>{{ user?.address || 'your home' }}</strong></p>
   </div>
 
   <div *ngIf="loading" class="flex-center" style="height: 200px;">
@@ -37,6 +37,18 @@
         <div class="stat-value" style="color: var(--color-success)">OPTIMAL</div>
         <div class="text-xs text-muted">Usage within standard bracket</div>
         <div class="stat-icon" style="opacity: 0.2">☘️</div>
+      </div>
+
+      <!-- NEW: IoT Live Meter Card -->
+      <div class="stat-card" *ngIf="user?.isSmartMeterEnabled" style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.02)); border: 1px solid rgba(16,185,129,0.3);">
+        <div class="flex-between">
+          <div class="stat-label" style="color: #10B981; font-weight: 700;">📡 LIVE SMART METER</div>
+          <span class="pulse-glow" style="width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+        </div>
+        <div class="stat-value" style="font-family: 'Courier New', monospace; letter-spacing: 2px; color: var(--color-text);">
+          {{ liveReading.toFixed(4) }} <span class="text-sm">kWh</span>
+        </div>
+        <div class="text-xs text-muted mt-1">Real-time IoT data syncing...</div>
       </div>
     </div>
 

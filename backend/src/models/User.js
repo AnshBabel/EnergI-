@@ -30,6 +30,12 @@ const userSchema = new mongoose.Schema(
     meterNumber: { type: String, trim: true },
     address: { type: String, trim: true },
     phone: { type: String, trim: true },
+    
+    // IoT Smart Meter Fields
+    isSmartMeterEnabled: { type: Boolean, default: false },
+    lastKnownReading: { type: Number, default: 0 },
+    consumptionRate: { type: Number, default: 0.2 }, // Units per virtual hour
+
     lastBillingDate: { type: Date, default: null },
     isActive: { type: Boolean, default: true },
   },

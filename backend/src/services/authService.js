@@ -87,6 +87,8 @@ export const registerConsumer = async ({ name, email, password, organizationId, 
     meterNumber,
     address,
     phone,
+    isSmartMeterEnabled,
+    consumptionRate
   });
 };
 

@@ -15,7 +15,16 @@ export class UsersComponent implements OnInit {
   users: any[] = [];
   loading = true;
   showModal = false;
-  form = { name: '', email: '', password: '', meterNumber: '', address: '', phone: '' };
+  form = { 
+    name: '', 
+    email: '', 
+    password: '', 
+    meterNumber: '', 
+    address: '', 
+    phone: '',
+    isSmartMeterEnabled: false,
+    consumptionRate: 0.2
+  };
   error = '';
   saving = false;
 
@@ -47,7 +56,10 @@ export class UsersComponent implements OnInit {
     this.userService.create(this.form).subscribe({
       next: () => {
         this.showModal = false;
-        this.form = { name: '', email: '', password: '', meterNumber: '', address: '', phone: '' };
+        this.form = { 
+          name: '', email: '', password: '', meterNumber: '', address: '', phone: '',
+          isSmartMeterEnabled: false, consumptionRate: 0.2
+        };
         this.load();
       },
       error: (err) => {

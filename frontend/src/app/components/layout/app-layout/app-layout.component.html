@@ -11,6 +11,9 @@
       <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
         <span class="nav-icon">📊</span> Dashboard
       </a>
+      <a routerLink="/admin/iot-hub" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📡</span> IoT Live Hub
+      </a>
       <p class="nav-section-label">Management</p>
       <a routerLink="/admin/users" routerLinkActive="active" class="nav-item">
         <span class="nav-icon">👥</span> Consumers
@@ -50,19 +53,6 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div class="user-chip">
-        <div class="user-avatar">
-          {{ user?.name?.charAt(0) || 'U' }}
-        </div>
-        <div class="user-info">
-          <div class="user-name">{{ user?.name }}</div>
-          <div class="user-role" [ngClass]="user?.role?.toLowerCase()">
-            <span class="role-dot"></span>
-            {{ user?.role }} 
-            <span *ngIf="user?.role === 'CONSUMER'">· {{ user?.consumerId }}</span>
-          </div>
-        </div>
-      </div>
       <button class="showcase-toggle-btn" 
               [class.inactive]="!showcaseService.isShowcaseActive"
               (click)="showcaseService.toggleShowcaseMode()">

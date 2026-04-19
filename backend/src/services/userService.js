@@ -20,7 +20,7 @@ export const getConsumerById = async (organizationId, userId) => {
 };
 
 export const updateConsumer = async (organizationId, userId, updates) => {
-  const allowed = ['name', 'phone', 'address', 'meterNumber', 'isActive'];
+  const allowed = ['name', 'phone', 'address', 'meterNumber', 'isActive', 'isSmartMeterEnabled', 'consumptionRate'];
   const filtered = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
   return User.findOneAndUpdate({ _id: userId, organizationId }, filtered, { new: true });
 };

@@ -11,6 +11,7 @@ import { TariffComponent as AdminTariff } from './pages/admin/tariff.component';
 import { BillsComponent as AdminBills } from './pages/admin/bills.component';
 import { DisputesComponent as AdminDisputes } from './pages/admin/disputes.component';
 import { AdminPaymentsComponent } from './pages/admin/payments.component';
+import { IotHubComponent as AdminIotHub } from './pages/admin/iot-hub.component';
 
 import { NotificationsComponent } from './pages/shared/notifications/notifications.component';
 import { PaymentStatusComponent } from './pages/shared/payment-status/payment-status.component';
@@ -39,6 +40,7 @@ export const routes: Routes = [
       { path: 'bills', component: AdminBills },
       { path: 'disputes', component: AdminDisputes },
       { path: 'payments', component: AdminPaymentsComponent },
+      { path: 'iot-hub', component: AdminIotHub },
       { path: 'notifications', component: NotificationsComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
