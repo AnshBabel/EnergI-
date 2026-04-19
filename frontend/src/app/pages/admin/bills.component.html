@@ -14,7 +14,7 @@
       </select>
       <button class="btn btn-secondary" (click)="handleExport()">⬇ Export CSV</button>
       <button class="btn btn-secondary" (click)="handleRunCycle()">⚡ Run Cycle</button>
-      <button id="generateBillBtn" class="btn btn-primary" (click)="showModal = true">+ Generate Bill</button>
+      <button id="generateBillBtn" class="btn btn-primary" (click)="openGenerateModal()">+ Generate Bill</button>
     </div>
   </div>
   <div *ngIf="cycleResult" class="card mb-6 animate-in" style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(124,58,237,0.05)); border: 1px solid rgba(16,185,129,0.3);">
@@ -98,7 +98,9 @@
               <td class="text-muted">{{ b.dueDate | date:'dd/MM/yyyy' }}</td>
               <td><span class="badge" [ngClass]="'badge-' + b.status">{{ b.status }}</span></td>
               <td>
-                <a [href]="billService.pdfUrl(b._id)" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm">📄 PDF</a>
+                <a [href]="billService.pdfUrl(b._id)" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm" title="Download PDF">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </a>
               </td>
             </tr>
           </tbody>
@@ -110,7 +112,12 @@
   <!-- Modal -->
   <div *ngIf="showModal" class="modal-overlay" (click)="showModal = false">
     <div class="modal" (click)="$event.stopPropagation()">
-      <h2>Generate Bill</h2>
+      <div class="flex-between mb-4">
+        <h2>Generate Bill</h2>
+        <button class="btn btn-secondary btn-sm" (click)="loadConsumers()" [disabled]="loadingConsumers">
+          {{ loadingConsumers ? 'Refreshing...' : '🔄 Refresh Consumers' }}
+        </button>
+      </div>
       <div *ngIf="error" class="alert alert-error">{{ error }}</div>
       <form (submit)="handleGenerate($event)">
         <div class="form-group">

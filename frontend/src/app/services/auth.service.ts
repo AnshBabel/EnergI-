@@ -65,8 +65,14 @@ export class AuthService {
         this.authState.setOrg(brandData.org);
         this.applyBranding(brandData.org);
       })
-      .catch(() => {
-        localStorage.removeItem('accessToken');
+      .catch((err) => {
+        console.error('Auth Init failed:', err);
+        // Only clear token if we're sure it's invalid (401/403)
+        // If it's a 500 or Network Error, keep it so the user can try refreshing again 
+        if (err.status === 401 || err.status === 403) {
+          localStorage.removeItem('accessToken');
+          this.authState.clear();
+        }
       })
       .finally(() => {
         this.authState.setLoading(false);

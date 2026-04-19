@@ -35,7 +35,7 @@
 
     <div *ngIf="error" class="alert alert-error" [@fadeSlide]>{{ error }}</div>
 
-    <form (submit)="handleSubmit($event)" [@formChange]="role + '-' + step">
+    <form (submit)="handleSubmit($event)">
       
       <ng-container *ngIf="role === 'ADMIN' && step === 1">
         <div class="form-group">

@@ -33,7 +33,16 @@ export const runBillingCycle = async (organizationId, { month, year }) => {
       }).sort({ billDate: -1 });
 
       const previousReading = lastBill ? lastBill.currentReading : 0;
-      const currentReading = consumer.lastKnownReading || (previousReading + 50);
+      
+      let currentReading = consumer.lastKnownReading;
+      let usedAverage = false;
+
+      // If no new reading (same as previous) or missing, use average
+      if (!currentReading || currentReading <= previousReading) {
+        const avg = await billService.getAverageConsumption(consumer._id);
+        currentReading = previousReading + avg;
+        usedAverage = true;
+      }
 
       const bill = await billService.generateBill(organizationId, consumer._id, {
         previousReading,
@@ -47,7 +56,8 @@ export const runBillingCycle = async (organizationId, { month, year }) => {
           consumer: consumer.name,
           units: bill.unitsConsumed,
           breakdown: bill.calculationBreakdown,
-          total: bill.totalInPaise
+          total: bill.totalInPaise,
+          estimated: usedAverage
         };
       }
     } catch (err) {

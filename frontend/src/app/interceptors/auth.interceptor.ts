@@ -1,10 +1,13 @@
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
   const token = localStorage.getItem('accessToken');
+  const router = inject(Router);
+  const http = inject(HttpClient);
   let authReq = req;
 
   if (token) {
@@ -16,11 +19,11 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
     authReq = req.clone({ withCredentials: true });
   }
 
-  const http = inject(HttpClient);
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && !(req as any)['_retry']) {
+      // Avoid infinite loop if refresh also fails with 401
+      if (error.status === 401 && !req.url.includes('/auth/refresh') && !(req as any)['_retry']) {
         (req as any)['_retry'] = true;
         return http.post<any>('/api/v1/auth/refresh', {}, { withCredentials: true }).pipe(
           switchMap((data) => {
@@ -31,10 +34,10 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
             });
             return next(retryReq);
           }),
-          catchError(() => {
+          catchError((refreshError) => {
             localStorage.removeItem('accessToken');
-            window.location.href = '/login';
-            return throwError(() => error);
+            router.navigate(['/login']);
+            return throwError(() => refreshError);
           })
         );
       }
@@ -42,3 +45,4 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
     })
   );
 };
+

@@ -29,7 +29,6 @@ app.use(cors({
 
 // Raw body for Stripe webhook (must come before express.json())
 app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
-app.use('/uploads', express.static('uploads'));
 // Body parsing
 app.use(express.json());
 app.use(cookieParser());
@@ -56,7 +55,11 @@ app.use((_req, res) => {
 
 // Global error handler
 app.use((err, _req, res, _next) => {
-  console.error(err.stack);
+  console.error('🔥 Global Error Handler:', err.message);
+  if (res.headersSent) {
+    console.warn('⚠️ Headers already sent, closing connection.');
+    return res.end();
+  }
   const status = err.status || 500;
   res.status(status).json({
     error: err.message || 'Internal Server Error',

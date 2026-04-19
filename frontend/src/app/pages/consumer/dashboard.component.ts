@@ -7,7 +7,8 @@ import { AuthState, User } from '../../state/auth.state';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
 import { Chart, registerables } from 'chart.js';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
+import { ShowcaseService } from '../../services/showcase.service';
 
 Chart.register(...registerables);
 
@@ -34,47 +35,78 @@ Chart.register(...registerables);
       ])
     ])
   ],
-  styles: []
+  styles: [`
+    .trend-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+    .trend-up { background: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
+    .trend-down { background: rgba(16, 185, 129, 0.1); color: var(--color-success); }
+    .insight-card { border-left: 4px solid var(--color-primary); background: linear-gradient(90deg, rgba(124, 58, 237, 0.05) 0%, transparent 100%); }
+    .pulse-glow { animation: pulse-glow 2s infinite; }
+  `]
 })
 export class DashboardComponent implements OnInit {
   @ViewChild('usageChart') usageChart!: ElementRef<HTMLCanvasElement>;
 
   user: User | null = null;
   bills: any[] = [];
+  intelligence: any = null;
   history: any[] = [];
   loading = true;
+  loadingIntel = true;
   paying: string | null = null;
   chart: any;
+  private sub = new Subscription();
 
   constructor(
     private authState: AuthState,
     public billService: BillService,
-    private paymentService: PaymentService
+    private paymentService: PaymentService,
+    private showcaseService: ShowcaseService
   ) {}
 
   ngOnInit(): void {
-    this.authState.user$.subscribe(user => this.user = user);
+    this.sub.add(this.authState.user$.subscribe(user => this.user = user));
     
+    // Watch for showcase mode toggle
+    this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
+      this.loadDashboard();
+    }));
+  }
+
+  loadDashboard(): void {
+    this.loading = true;
+    this.loadingIntel = true;
+
     forkJoin({
       bills: this.billService.listMy({ limit: 3 }),
-      history: this.billService.getMyHistory()
+      intel: this.billService.getIntelligence()
     }).subscribe({
       next: (res) => {
         this.bills = res.bills.bills || [];
-        this.history = res.history;
-        setTimeout(() => this.initChart(), 0);
+        this.intelligence = res.intel;
+        if (this.intelligence.hasHistory) {
+          this.history = this.intelligence.history;
+        }
       },
       error: (err) => console.error(err),
-      complete: () => this.loading = false
+      complete: () => {
+        this.loading = false;
+        this.loadingIntel = false;
+        // Wait for DOM to settle
+        setTimeout(() => this.initChart(), 500);
+      }
     });
   }
 
   initChart(): void {
-    if (!this.usageChart) return;
+    if (!this.usageChart || !this.history.length) return;
     const ctx = this.usageChart.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const labels = this.history.map(h => `${h._id.month}/${h._id.year}`);
+    if (this.chart) {
+      this.chart.destroy();
+    }
+
+    const labels = this.history.map(h => h.period);
     const data = this.history.map(h => h.units);
 
     this.chart = new Chart(ctx, {
@@ -134,6 +166,12 @@ export class DashboardComponent implements OnInit {
   }
 
   formatAmount(paise: number): string {
+    if (!paise && paise !== 0) return '₹0.00';
     return `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  }
+
+  isEligibleForEarlyBird(bill: any): boolean {
+    if (!bill?.earlyBird?.eligibleUntil || bill.status !== 'UNPAID') return false;
+    return new Date() <= new Date(bill.earlyBird.eligibleUntil);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
+import { Component, Injectable, Renderer2, RendererFactory2 } from '@angular/core';
 import { AuthState } from '../state/auth.state';
 
 @Component({
@@ -43,5 +43,3 @@ export class BrandingManagerComponent {
     this.renderer.removeStyle(root, '--color-primary-dark');
   }
 }
-
-import { Component } from '@angular/core';

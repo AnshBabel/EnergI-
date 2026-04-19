@@ -36,13 +36,17 @@ Chart.register(...registerables);
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('statsChart') statsChart!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('revenueChart') revenueChart!: ElementRef<HTMLCanvasElement>;
   
   analytics: any = null;
   user: User | null = null;
   history: any[] = [];
   recentBills: any[] = [];
   loading = true;
+  processingBatch = false;
+  batchResult: any = null;
   chart: any;
+  pieChart: any;
   private sub = new Subscription(); // To prevent memory leaks
 
   constructor(
@@ -68,10 +72,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.recentBills = res.bills?.bills || [];
         this.history = res.history || [];
         
-        // Safety Guard: Only init chart if we have history data and the view is ready
-        if (this.history.length > 0) {
-          setTimeout(() => this.initChart(), 100);
-        }
+        // Safety Guard: Only init charts if possible
+        setTimeout(() => {
+          this.initChart();
+          this.initPieChart();
+        }, 100);
       },
       error: (err) => {
         console.error('Failed to load dashboard data', err);
@@ -153,6 +158,56 @@ export class DashboardComponent implements OnInit, OnDestroy {
             ticks: { color: '#64748b' }
           }
         }
+      }
+    });
+  }
+
+  initPieChart(): void {
+    if (!this.revenueChart || !this.analytics?.revenueMix) return;
+    const ctx = this.revenueChart.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    if (this.pieChart) this.pieChart.destroy();
+
+    this.pieChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: this.analytics.revenueMix.map((m: any) => m.label),
+        datasets: [{
+          data: this.analytics.revenueMix.map((m: any) => (m.value || 0) / 100),
+          backgroundColor: this.analytics.revenueMix.map((m: any) => m.color),
+          borderWidth: 0,
+          hoverOffset: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        cutout: '70%',
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 20 } }
+        }
+      }
+    });
+  }
+
+  runBatchCycle(): void {
+    const month = new Date().getMonth() + 1;
+    const year = new Date().getFullYear();
+    
+    if (!confirm(`Are you sure you want to trigger the billing cycle for ${month}/${year}? This will generate bills for all active consumers.`)) return;
+
+    this.processingBatch = true;
+    this.billService.runCycle(month, year).subscribe({
+      next: (res) => {
+        this.batchResult = res;
+        this.loadDashboardData(); // Refresh stats
+      },
+      error: (err) => {
+        alert(err.error?.error || 'Batch billing failed');
+        this.processingBatch = false;
+      },
+      complete: () => {
+        this.processingBatch = false;
       }
     });
   }

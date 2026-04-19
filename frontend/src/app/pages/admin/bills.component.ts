@@ -15,6 +15,7 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
 export class BillsComponent implements OnInit {
   bills: any[] = [];
   consumers: any[] = [];
+  loadingConsumers = false;
   loading = true;
   showModal = false;
   error = '';
@@ -42,17 +43,26 @@ export class BillsComponent implements OnInit {
 
   load(): void {
     this.loading = true;
-    Promise.all([
-      this.billService.listAll({ status: this.filterStatus }).toPromise(),
-      this.userService.list({ limit: 200 }).toPromise()
-    ]).then(([billData, userData]) => {
-      this.bills = billData.bills || [];
-      this.consumers = userData.users || [];
-    }).catch(err => {
-      console.error('Failed to load bills', err);
-    }).finally(() => {
-      this.loading = false;
+    this.billService.listAll({ status: this.filterStatus }).subscribe({
+      next: (data) => this.bills = data.bills || [],
+      error: (err) => console.error('Failed to load bills', err),
+      complete: () => this.loading = false
     });
+    this.loadConsumers();
+  }
+
+  loadConsumers(): void {
+    this.loadingConsumers = true;
+    this.userService.list({ limit: 200 }).subscribe({
+      next: (data) => this.consumers = data.users || [],
+      error: (err) => console.error('Failed to load consumers', err),
+      complete: () => this.loadingConsumers = false
+    });
+  }
+
+  openGenerateModal(): void {
+    this.showModal = true;
+    this.loadConsumers();
   }
 
   handleGenerate(e: Event): void {

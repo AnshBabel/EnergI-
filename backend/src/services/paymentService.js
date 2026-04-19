@@ -14,6 +14,17 @@ export const createCheckoutSession = async (organizationId, billId, userId) => {
   if (bill.status === 'DISPUTED') throw Object.assign(new Error('Payment is frozen while bill is in dispute'), { status: 403 });
   if (bill.status === 'WAIVED') throw Object.assign(new Error('This bill has been waived'), { status: 400 });
 
+  let amountToPayInPaise = bill.totalInPaise;
+  let ebDiscountApplied = 0;
+
+  if (bill.earlyBird && bill.earlyBird.discountPercent > 0) {
+    const isEligible = new Date() <= new Date(bill.earlyBird.eligibleUntil);
+    if (isEligible) {
+      ebDiscountApplied = bill.earlyBird.discountAmountInPaise;
+      amountToPayInPaise = bill.totalInPaise - ebDiscountApplied;
+    }
+  }
+
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     mode: 'payment',
@@ -21,18 +32,23 @@ export const createCheckoutSession = async (organizationId, billId, userId) => {
       {
         price_data: {
           currency: 'inr',
-          unit_amount: bill.totalInPaise, // Stripe uses smallest unit (paise for INR)
+          unit_amount: amountToPayInPaise, // Stripe uses smallest unit (paise for INR)
           product_data: {
             name: `Electricity Bill — ${bill.billingPeriod.month}/${bill.billingPeriod.year}`,
-            description: `${bill.unitsConsumed} units consumed`,
+            description: `${bill.unitsConsumed} units consumed${ebDiscountApplied > 0 ? ' (Early-Bird Discount Applied)' : ''}`,
           },
         },
         quantity: 1,
       },
     ],
-    metadata: { billId: billId.toString(), userId: userId.toString(), organizationId: organizationId.toString() },
-    success_url: `${env.FRONTEND_URL}/consumer/bills?payment=success`,
-    cancel_url: `${env.FRONTEND_URL}/consumer/bills?payment=cancelled`,
+    metadata: { 
+      billId: billId.toString(), 
+      userId: userId.toString(), 
+      organizationId: organizationId.toString(),
+      ebDiscountApplied: ebDiscountApplied.toString()
+    },
+    success_url: `${env.FRONTEND_URL}/payment/status?session_id={CHECKOUT_SESSION_ID}&success=true`,
+    cancel_url: `${env.FRONTEND_URL}/payment/status?success=false`,
   });
 
   return { url: session.url, sessionId: session.id };
@@ -81,4 +97,48 @@ export const handleWebhook = async (rawBody, signature) => {
   }
 
   return { received: true };
+};
+
+/**
+ * Refund a successful payment via Stripe and update internal records
+ */
+export const refundPayment = async (organizationId, paymentId) => {
+  const payment = await Payment.findOne({ _id: paymentId, organizationId });
+  if (!payment) throw Object.assign(new Error('Payment not found'), { status: 404 });
+  if (payment.status !== 'SUCCESS') throw Object.assign(new Error('Only successful payments can be refunded'), { status: 400 });
+
+  // 1. Trigger Stripe Refund
+  const refund = await stripe.refunds.create({
+    payment_intent: payment.stripePaymentIntentId,
+    reason: 'requested_by_customer',
+    metadata: { paymentId: paymentId.toString(), billId: payment.billId.toString() }
+  });
+
+  // 2. Update Payment record
+  payment.status = 'REFUNDED';
+  payment.processedAt = new Date();
+  await payment.save();
+
+  // 3. Mark the Bill back to UNPAID (or a new REFUNDED status if preferred)
+  await Bill.findByIdAndUpdate(payment.billId, { status: 'UNPAID' });
+
+  return { refundId: refund.id, status: 'REFUNDED' };
+};
+
+/**
+ * List all payments for an organization (Admin only)
+ */
+export const listAllPayments = async (organizationId, { limit = 20, page = 1 }) => {
+  const skip = (page - 1) * limit;
+  const [payments, total] = await Promise.all([
+    Payment.find({ organizationId })
+      .populate('userId', 'name email')
+      .populate('billId', 'billingPeriod totalInPaise')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Payment.countDocuments({ organizationId })
+  ]);
+
+  return { payments, total, pages: Math.ceil(total / limit) };
 };

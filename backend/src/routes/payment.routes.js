@@ -10,4 +10,8 @@ router.post('/webhook', paymentController.webhook);
 // Consumer creates checkout session
 router.post('/checkout/:billId', authenticate, paymentController.createCheckout);
 
+// Admin: List all payments & Refund
+router.get('/all', authenticate, paymentController.listAll);
+router.post('/refund/:paymentId', authenticate, paymentController.refund);
+
 export default router;

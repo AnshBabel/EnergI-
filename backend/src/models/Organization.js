@@ -7,7 +7,12 @@ const organizationSchema = new mongoose.Schema(
     logoUrl: { type: String, default: null },
     // We'll keep primaryColor as the 'brandColor' for the initial fallback logic
     primaryColor: { type: String, default: '#7C3AED' }, 
-    contactEmail: { type: String, required: true, lowercase: true },
+    contactEmail: { 
+      type: String, 
+      required: true, 
+      lowercase: true,
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid contact email address']
+    },
     planTier: {
       type: String,
       enum: ['starter', 'pro', 'enterprise'],
@@ -23,7 +28,9 @@ const organizationSchema = new mongoose.Schema(
     footerText: { 
       type: String, 
       default: "Thank you for using our services. Please contact us for any billing queries." 
-    }, // Custom text appearing at the bottom of bills
+    },
+    billingCycleDay: { type: Number, default: 1, min: 1, max: 28 }, // Day of month to run billing
+    isAutoBillingEnabled: { type: Boolean, default: false },
     // ---------------------------
   },
   { timestamps: true }

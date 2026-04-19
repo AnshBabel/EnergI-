@@ -21,6 +21,8 @@ const tariffConfigSchema = new mongoose.Schema(
     slabs: { type: [slabSchema], required: true, validate: v => v.length > 0 },
     fixedChargeInPaise: { type: Number, default: 0 }, // Monthly fixed charge
     taxPercent: { type: Number, default: 0 }, // e.g. 18 = 18%
+    earlyBirdDiscountPercent: { type: Number, default: 0 }, // e.g. 2 for 2%
+    earlyBirdGraceDays: { type: Number, default: 0 }, // Days from generation
     isActive: { type: Boolean, default: false },
   },
   { timestamps: true }

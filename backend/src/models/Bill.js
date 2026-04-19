@@ -18,6 +18,13 @@ const billSchema = new mongoose.Schema(
     },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     tariffConfigId: { type: mongoose.Schema.Types.ObjectId, ref: 'TariffConfig', required: true },
+    
+    earlyBird: {
+      eligibleUntil: { type: Date },
+      discountPercent: { type: Number, default: 0 },
+      discountAmountInPaise: { type: Number, default: 0 }
+    },
+
     billingPeriod: {
       month: { type: Number, required: true, min: 1, max: 12 },
       year: { type: Number, required: true },

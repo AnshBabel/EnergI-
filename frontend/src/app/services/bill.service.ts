@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ShowcaseService } from './showcase.service';
 
 @Injectable({ providedIn: 'root' })
 export class BillService {
   private base = '/api/v1/bills';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private showcaseService: ShowcaseService
+  ) {}
 
   listMy(params?: any): Observable<any> {
     let httpParams = new HttpParams();
@@ -63,5 +67,10 @@ export class BillService {
 
   runCycle(month: number, year: number): Observable<any> {
     return this.http.post<any>(`${this.base}/run-cycle`, { month, year });
+  }
+
+  getIntelligence(): Observable<any> {
+    const params = this.showcaseService.isShowcaseActive ? new HttpParams().set('demo', 'true') : undefined;
+    return this.http.get<any>(`${this.base}/my-intelligence`, { params });
   }
 }

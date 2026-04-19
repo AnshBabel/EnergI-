@@ -15,6 +15,7 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().min(1, 'STRIPE_WEBHOOK_SECRET is required'),
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+  BACKEND_URL: z.string().url().default('http://localhost:5000'),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -6,6 +6,10 @@ import Organization from '../models/Organization.js';
 
 export const generate = async (req, res, next) => {
   try {
+    const { previousReading, currentReading, billingPeriod } = req.body;
+    if (previousReading === undefined || currentReading === undefined || !billingPeriod) {
+      return res.status(400).json({ error: 'Missing required fields: previousReading, currentReading, or billingPeriod' });
+    }
     const bill = await billService.generateBill(
       req.user.organizationId,
       req.params.userId,
@@ -51,7 +55,7 @@ export const downloadPdf = async (req, res, next) => {
       userService.getConsumerById(req.user.organizationId, bill.userId._id || bill.userId),
       Organization.findById(req.user.organizationId),
     ]);
-    generateBillPdf(bill, user, org, res);
+    await generateBillPdf(bill, user, org, res);
   } catch (err) { next(err); }
 };
 
@@ -74,6 +78,9 @@ import * as cronService from '../services/cronService.js';
 export const runCycle = async (req, res, next) => {
   try {
     const { month, year } = req.body;
+    if (!month || !year) {
+      return res.status(400).json({ error: 'Missing required fields: month and year' });
+    }
     const result = await cronService.runBillingCycle(req.user.organizationId, { month, year });
     res.json(result);
   } catch (err) { next(err); }
@@ -83,5 +90,13 @@ export const userHistory = async (req, res, next) => {
   try {
     const data = await billService.getUserHistory(req.user.organizationId, req.user.userId);
     res.json(data);
+  } catch (err) { next(err); }
+};
+
+export const getIntelligence = async (req, res, next) => {
+  try {
+    const forceDemo = req.query.demo === 'true';
+    const result = await billService.getIntelligence(req.user.userId, req.user.organizationId, forceDemo);
+    res.json(result);
   } catch (err) { next(err); }
 };

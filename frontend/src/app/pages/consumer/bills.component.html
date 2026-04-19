@@ -37,10 +37,13 @@
               <td><span class="badge" [ngClass]="'badge-' + b.status">{{ b.status }}</span></td>
               <td>
                 <div class="flex gap-2">
-                  <a [href]="billService.pdfUrl(b._id)" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm">📄</a>
+                  <a [href]="billService.pdfUrl(b._id)" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm" title="Download PDF">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </a>
                   <ng-container *ngIf="b.status === 'UNPAID'">
                     <button class="btn btn-primary btn-sm" (click)="handlePay(b._id)" [disabled]="paying === b._id">
-                      {{ paying === b._id ? '...' : 'Pay' }}
+                      <span *ngIf="paying !== b._id">Pay</span>
+                      <span *ngIf="paying === b._id">Processing...</span>
                     </button>
                     <button [id]="'disputeBtn-' + b._id" class="btn btn-danger btn-sm" (click)="disputeModal = b">
                       Dispute

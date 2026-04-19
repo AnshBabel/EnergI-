@@ -22,6 +22,12 @@ import { AuthService } from '../services/auth.service';
         style({ opacity: 0, transform: 'translateY(-10px)' }),
         animate('0.3s ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
       ])
+    ]),
+    trigger('formChange', [
+      transition('* => *', [
+        style({ opacity: 0, transform: 'translateX(10px)' }),
+        animate('0.4s ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
+      ])
     ])
   ],
   styles: [`
@@ -95,7 +101,18 @@ export class RegisterComponent {
     }
 
     this.error = '';
-    this.loading = true;
+    // Final Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.form.email)) {
+      this.error = 'Invalid email address format';
+      this.loading = false;
+      return;
+    }
+    if (this.role === 'ADMIN' && !emailRegex.test(this.form.contactEmail)) {
+      this.error = 'Invalid organization contact email';
+      this.loading = false;
+      return;
+    }
 
     // Use FormData to support file uploads
     const formData = new FormData();

@@ -21,6 +21,12 @@
       <a routerLink="/admin/bills" routerLinkActive="active" class="nav-item">
         <span class="nav-icon">🧾</span> Bills
       </a>
+      <a routerLink="/admin/payments" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">💸</span> Payments
+      </a>
+      <a routerLink="/admin/notifications" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🔔</span> Notifications
+      </a>
       <a routerLink="/admin/disputes" routerLinkActive="active" class="nav-item">
         <span class="nav-icon">⚠️</span> Disputes
       </a>
@@ -35,17 +41,43 @@
       <a routerLink="/consumer/bills" routerLinkActive="active" class="nav-item">
         <span class="nav-icon">🧾</span> My Bills
       </a>
+      <a routerLink="/consumer/notifications" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🔔</span> Notifications
+      </a>
       <a routerLink="/consumer/disputes" routerLinkActive="active" class="nav-item">
         <span class="nav-icon">📋</span> Disputes
       </a>
     </nav>
 
-    <div style="padding: 16px 12px; border-top: 1px solid var(--color-border); margin-top: auto;">
-      <div style="padding: 10px 12px; border-radius: 8px; background: var(--color-surface-2); margin-bottom: 8px;">
-        <div style="fontSize: 13px; fontWeight: 600;">{{ user?.name }}</div>
-        <div style="fontSize: 11px; color: var(--color-text-muted);">{{ user?.role }} · {{ user?.consumerId }}</div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">
+          {{ user?.name?.charAt(0) || 'U' }}
+        </div>
+        <div class="user-info">
+          <div class="user-name">{{ user?.name }}</div>
+          <div class="user-role" [ngClass]="user?.role?.toLowerCase()">
+            <span class="role-dot"></span>
+            {{ user?.role }} 
+            <span *ngIf="user?.role === 'CONSUMER'">· {{ user?.consumerId }}</span>
+          </div>
+        </div>
       </div>
-      <button class="nav-item" (click)="handleLogout()" style="color: var(--color-danger); width: 100%;">
+      <button class="showcase-toggle-btn" 
+              [class.inactive]="!showcaseService.isShowcaseActive"
+              (click)="showcaseService.toggleShowcaseMode()">
+        <span>✨ Showcase Mode</span>
+        <div class="toggle-switch">
+          <div class="toggle-knob"></div>
+        </div>
+      </button>
+
+      <button class="theme-toggle-btn" (click)="themeService.toggleTheme()">
+        <span class="nav-icon" *ngIf="themeService.isDarkMode()">☀️</span>
+        <span class="nav-icon" *ngIf="!themeService.isDarkMode()">🌙</span>
+        {{ themeService.isDarkMode() ? 'Light Mode' : 'Dark Mode' }}
+      </button>
+      <button class="logout-btn" (click)="handleLogout()">
         <span class="nav-icon">🚪</span> Logout
       </button>
     </div>

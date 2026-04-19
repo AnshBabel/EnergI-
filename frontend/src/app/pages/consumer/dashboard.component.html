@@ -9,6 +9,37 @@
   </div>
 
   <ng-container *ngIf="!loading">
+    <!-- Intelligence Row & Trends -->
+    <div class="stats-grid" *ngIf="intelligence?.hasHistory" [@fadeInUp]>
+      <div class="stat-card">
+        <div class="stat-label">Consumption Trend</div>
+        <div class="stat-value" [style.color]="intelligence.trends.isIncreasing ? 'var(--color-danger)' : 'var(--color-success)'">
+          {{ intelligence.trends.isIncreasing ? '↑' : '↓' }} {{ intelligence.trends.momChange }}%
+        </div>
+        <div class="text-xs" [ngClass]="intelligence.trends.isIncreasing ? 'trend-up' : 'trend-down'" style="display:inline-block; padding: 2px 8px; border-radius: 4px;">
+          vs. last month
+        </div>
+        <div class="stat-icon" style="opacity: 0.2;">📊</div>
+      </div>
+      
+      <!-- Slab Advisor Insight -->
+      <div class="stat-card insight-card" *ngIf="intelligence.insight" [style.borderLeftColor]="'#F59E0B'">
+        <div class="stat-label" style="color: var(--color-warning)">💡 Energy Saving Tip</div>
+        <div class="text-sm mt-1" style="color: var(--color-text)">
+          {{ intelligence.insight.message }}
+        </div>
+        <div class="stat-icon" style="opacity: 0.3;">⚡</div>
+      </div>
+
+      <!-- General Health Insight -->
+      <div class="stat-card" *ngIf="!intelligence.insight">
+        <div class="stat-label">Energy Health</div>
+        <div class="stat-value" style="color: var(--color-success)">OPTIMAL</div>
+        <div class="text-xs text-muted">Usage within standard bracket</div>
+        <div class="stat-icon" style="opacity: 0.2">☘️</div>
+      </div>
+    </div>
+
     <!-- Current Bill Hero Card -->
     <div *ngIf="latestBill" class="card mb-6" [@fadeInUp] [style.background]="isOverdue ? 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05))' : 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(167,139,250,0.05))'" [style.borderColor]="isOverdue ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.3)'">
       <div class="flex-between">
@@ -22,6 +53,16 @@
             <span class="badge" [ngClass]="'badge-' + latestBill.status">{{ latestBill.status }}</span>
             <span *ngIf="isOverdue" style="font-size: 12px; color: var(--color-danger); margin-left: 8px;">⚠️ Overdue since {{ latestBill.dueDate | date:'dd/MM/yyyy' }}</span>
             <span *ngIf="!isOverdue && latestBill.status === 'UNPAID'" class="text-muted text-sm" style="margin-left: 8px;">Due {{ latestBill.dueDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+          
+          <!-- NEW: Early Bird Banner -->
+          <div *ngIf="isEligibleForEarlyBird(latestBill)" 
+               class="mt-3 pulse-glow" 
+               style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">✨</span>
+            <div style="font-size: 12px; color: #10B981; font-weight: 600;">
+              Early-Bird Discount: Pay before {{ latestBill.earlyBird.eligibleUntil | date:'dd MMM' }} and save {{ formatAmount(latestBill.earlyBird.discountAmountInPaise) }}!
+            </div>
           </div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
@@ -44,9 +85,13 @@
       <p>Your bills will appear here once generated</p>
     </div>
 
-    <!-- Consumption Trend Chart -->
     <div class="card mb-6" [@fadeInUp]>
-      <h3 style="margin-bottom: 24px; font-weight: 600;">Energy Usage Trend</h3>
+      <div class="flex-between mb-4" style="align-items: center;">
+        <h3 style="margin: 0; font-weight: 600;">Energy Usage Trend</h3>
+        <span *ngIf="intelligence?.isSample" class="badge" style="background: rgba(124,58,237,0.1); color: var(--color-primary-light); font-size: 10px; border: 1px solid rgba(124,58,237,0.2);">
+          ✨ Sample Analysis Mode
+        </span>
+      </div>
       <div class="chart-container" style="height: 250px; position: relative;">
         <canvas #usageChart></canvas>
       </div>

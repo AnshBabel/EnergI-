@@ -7,6 +7,8 @@
   --color-primary: #7C3AED;
   --color-primary-light: #A78BFA;
   --color-primary-dark: #5B21B6;
+  
+  /* Dark Mode Default */
   --color-bg: #0F0F17;
   --color-surface: #1A1A2E;
   --color-surface-2: #232340;
@@ -14,7 +16,6 @@
   --color-text: #F1F0FF;
   --color-text-muted: #9CA3AF;
   
-  /* Premium Glassmorphism & Depth */
   --glass-bg: rgba(17, 24, 39, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px 10px rgba(0, 0, 0, 0.37);
@@ -27,12 +28,30 @@
   --color-unpaid: #F59E0B;
   --color-disputed: #EF4444;
   --color-waived: #6B7280;
+  
   --radius: 16px;
   --radius-sm: 10px;
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   --shadow-glow: 0 0 40px rgba(124, 58, 237, 0.15);
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --font: 'Inter', sans-serif;
+}
+
+body.light-theme {
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F1F5F9;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-text: #1E293B;
+  --color-text-muted: #64748B;
+  
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  --glow-primary: 0 0 30px rgba(124, 58, 237, 0.1);
+  
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 40px rgba(124, 58, 237, 0.1);
 }
 
 /* Animations */

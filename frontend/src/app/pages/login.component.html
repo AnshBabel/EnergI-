@@ -29,7 +29,7 @@
 
     <div *ngIf="error" class="alert alert-error" [@fadeSlide]>{{ error }}</div>
 
-    <form (submit)="handleSubmit($event)" [@formChange]="role">
+    <form (submit)="handleSubmit($event)">
       <div class="form-group" *ngIf="role === 'ADMIN'">
         <label class="form-label">Organization Slug</label>
         <div class="input-wrapper">
