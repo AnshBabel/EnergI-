@@ -1,4 +1,5 @@
 import TariffConfig from '../models/TariffConfig.js';
+import { generateMockData } from '../utils/mockData.js';
 
 export const getActiveTariff = async (organizationId) => {
   const tariff = await TariffConfig.findOne({ organizationId, isActive: true });
@@ -24,8 +25,14 @@ export const setActiveTariff = async (organizationId, tariffId) => {
   return tariff;
 };
 
-export const listTariffs = async (organizationId) =>
-  TariffConfig.find({ organizationId }).sort({ effectiveFrom: -1 });
+export const listTariffs = async (organizationId, { forceDemo = false } = {}) => {
+  if (forceDemo) {
+    const { tariffs } = generateMockData(organizationId);
+    return tariffs;
+  }
+  return TariffConfig.find({ organizationId }).sort({ effectiveFrom: -1 });
+};
+
 
 export const deleteTariff = async (organizationId, tariffId) => {
   const tariff = await TariffConfig.findOne({ _id: tariffId, organizationId });

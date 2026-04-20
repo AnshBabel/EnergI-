@@ -15,17 +15,21 @@ export const raise = async (req, res, next) => {
 
 export const listForAdmin = async (req, res, next) => {
   try {
-    const disputes = await disputeService.listDisputesByOrg(req.user.organizationId, req.query);
+    const forceDemo = req.query.demo === 'true';
+    const disputes = await disputeService.listDisputesByOrg(req.user.organizationId, { ...req.query, forceDemo });
     res.json({ disputes });
   } catch (err) { next(err); }
 };
 
+
 export const listForConsumer = async (req, res, next) => {
   try {
-    const disputes = await disputeService.listDisputesByUser(req.user.organizationId, req.user.userId);
+    const forceDemo = req.query.demo === 'true';
+    const disputes = await disputeService.listDisputesByUser(req.user.organizationId, req.user.userId, { forceDemo });
     res.json({ disputes });
   } catch (err) { next(err); }
 };
+
 
 export const resolve = async (req, res, next) => {
   try {

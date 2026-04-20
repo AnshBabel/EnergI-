@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { PaymentService } from '../../services/payment.service';
+import { ShowcaseService } from '../../services/showcase.service';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 
@@ -99,17 +101,23 @@ import { trigger, transition, style, animate, query, stagger } from '@angular/an
     ])
   ]
 })
-export class AdminPaymentsComponent implements OnInit {
+export class AdminPaymentsComponent implements OnInit, OnDestroy {
   payments: any[] = [];
   totalPayments = 0;
   totalRevenue = 0;
   loading = true;
   refunding: string | null = null;
+  private sub = new Subscription();
 
-  constructor(private paymentService: PaymentService) {}
+  constructor(
+    private paymentService: PaymentService,
+    private showcaseService: ShowcaseService
+  ) {}
 
   ngOnInit(): void {
-    this.load();
+    this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
+      this.load();
+    }));
   }
 
   load(): void {
@@ -141,6 +149,10 @@ export class AdminPaymentsComponent implements OnInit {
   }
 
   formatAmount(paise: number): string {
-    return `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    return `₹${((paise || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
   }
 }

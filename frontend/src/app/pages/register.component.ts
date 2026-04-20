@@ -69,7 +69,8 @@ export class RegisterComponent {
     footerText: '', // New Field
     name: '',
     email: '',
-    password: ''
+    password: '',
+    isSmartMeterEnabled: false
   };
 
   // File data
@@ -183,7 +184,8 @@ export class RegisterComponent {
       footerText: 'Official Bill - Contact support@energi.com for queries',
       name: 'John EnergI',
       email: 'john@energi.com',
-      password: 'Password123!'
+      password: 'Password123!',
+      isSmartMeterEnabled: false
     };
     this.step = 1;
   }

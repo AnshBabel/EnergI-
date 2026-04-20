@@ -1,16 +1,22 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ShowcaseService } from './showcase.service';
 
 @Injectable({ providedIn: 'root' })
 export class TariffService {
   private base = '/api/v1/tariffs';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private showcaseService: ShowcaseService
+  ) {}
 
   list(): Observable<any> {
-    return this.http.get<any>(this.base);
+    const params = this.showcaseService.isShowcaseActive ? new HttpParams().set('demo', 'true') : undefined;
+    return this.http.get<any>(this.base, { params });
   }
+
 
   create(data: any): Observable<any> {
     return this.http.post<any>(this.base, data);

@@ -5,9 +5,32 @@ import Payment from '../models/Payment.js';
 import User from '../models/User.js';
 import { queuePaymentSuccessNotification } from './notificationService.js';
 import { formatPaise } from '../utils/billingEngine.js';
+import { generateMockData } from '../utils/mockData.js';
 
-export const createCheckoutSession = async (organizationId, billId, userId) => {
-  const bill = await Bill.findOne({ _id: billId, organizationId, userId });
+export const createCheckoutSession = async (organizationId, billId, userId, forceDemo = false) => {
+  let bill, user;
+  if (forceDemo) {
+    const mock = generateMockData(organizationId);
+    bill = mock.bills.find(b => b._id.toString() === billId.toString());
+    user = mock.users.find(u => u._id.toString() === userId.toString());
+    
+    if (!bill) throw Object.assign(new Error('Mock bill not found'), { status: 404 });
+
+    // Simulate completion loop immediately for Showcase Mode
+    queuePaymentSuccessNotification(
+      { _id: 'mock_pay_' + Date.now(), amountInPaise: bill.totalInPaise },
+      bill,
+      user,
+      true // forceDemo = true, skips storage and real email
+    ).catch(console.error);
+
+    return { 
+      url: `${env.FRONTEND_URL}/payment/status?success=true&demo=true&billId=${billId}`, 
+      sessionId: 'mock_session_' + Date.now() 
+    };
+  }
+
+  bill = await Bill.findOne({ _id: billId, organizationId, userId });
   if (!bill) throw Object.assign(new Error('Bill not found'), { status: 404 });
   
   if (bill.status === 'PAID') throw Object.assign(new Error('Bill is already paid'), { status: 400 });
@@ -102,7 +125,11 @@ export const handleWebhook = async (rawBody, signature) => {
 /**
  * Refund a successful payment via Stripe and update internal records
  */
-export const refundPayment = async (organizationId, paymentId) => {
+export const refundPayment = async (organizationId, paymentId, forceDemo = false) => {
+  if (forceDemo) {
+    return { refundId: 'mock_refund_' + Date.now(), status: 'REFUNDED' };
+  }
+
   const payment = await Payment.findOne({ _id: paymentId, organizationId });
   if (!payment) throw Object.assign(new Error('Payment not found'), { status: 404 });
   if (payment.status !== 'SUCCESS') throw Object.assign(new Error('Only successful payments can be refunded'), { status: 400 });
@@ -128,7 +155,12 @@ export const refundPayment = async (organizationId, paymentId) => {
 /**
  * List all payments for an organization (Admin only)
  */
-export const listAllPayments = async (organizationId, { limit = 20, page = 1 }) => {
+export const listAllPayments = async (organizationId, { limit = 20, page = 1, forceDemo = false }) => {
+  if (forceDemo) {
+    const { payments } = generateMockData(organizationId);
+    return { payments, total: payments.length, pages: 1 };
+  }
+  
   const skip = (page - 1) * limit;
   const [payments, total] = await Promise.all([
     Payment.find({ organizationId })
@@ -142,3 +174,4 @@ export const listAllPayments = async (organizationId, { limit = 20, page = 1 }) 
 
   return { payments, total, pages: Math.ceil(total / limit) };
 };
+

@@ -1,7 +1,7 @@
 <app-app-layout>
   <div class="page-header" [@fadeInUp]>
-    <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -1px; margin: 0;">Welcome, {{ user?.name }} 👋</h1>
-    <p class="text-muted" style="margin-top: 4px;">Managing your energy for <strong>{{ user?.address || 'your home' }}</strong></p>
+    <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -1px; margin: 0;">Welcome, {{ displayUser?.name }} 👋</h1>
+    <p class="text-muted" style="margin-top: 4px;">Managing your energy for <strong>{{ displayUser?.address || 'your home' }}</strong></p>
   </div>
 
   <div *ngIf="loading" class="flex-center" style="height: 200px;">

@@ -3,8 +3,39 @@ import Organization from '../models/Organization.js';
 import { sendBillGeneratedEmail, sendPaymentSuccessEmail, sendOverdueReminderEmail } from '../utils/emailService.js';
 import { formatPaise } from '../utils/billingEngine.js';
 import Bill from '../models/Bill.js';
+import { generateMockData } from '../utils/mockData.js';
+
+export const listNotifications = async (organizationId, { userId, page = 1, limit = 20, forceDemo = false } = {}) => {
+  if (forceDemo) {
+    const { notifications, users } = generateMockData(organizationId);
+    // For individual consumer demo, we always show data for the first mock persona
+    const demoUser = users[0];
+    const userNotifs = userId ? notifications.filter(n => n.userId.toString() === demoUser._id.toString()) : notifications;
+    return { notifications: userNotifs, total: userNotifs.length };
+  }
+  
+  const query = { organizationId };
+  if (userId) query.userId = userId;
+  
+  const skip = (page - 1) * limit;
+  const [notifications, total] = await Promise.all([
+    Notification.find(query)
+      .populate('userId', 'name email consumerId')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Notification.countDocuments(query),
+  ]);
+  
+  return { notifications, total };
+};
 
 const createAndSend = async (notifData, sendFn) => {
+  if (notifData.skipStorage) {
+    console.log(`[Showcase] Simulating ${notifData.type} notification for user ${notifData.userId}`);
+    return { ...notifData, status: 'SENT', sentAt: new Date(), isSimulated: true };
+  }
+
   const notif = await Notification.create({ ...notifData, status: 'PENDING' });
   try {
     await sendFn();
@@ -62,7 +93,7 @@ export const queueBillGeneratedNotification = async (bill, user) => {
   );
 };
 
-export const queuePaymentSuccessNotification = async (payment, bill, user) => {
+export const queuePaymentSuccessNotification = async (payment, bill, user, forceDemo = false) => {
   const org = await Organization.findById(bill.organizationId);
   return createAndSend(
     {
@@ -70,6 +101,7 @@ export const queuePaymentSuccessNotification = async (payment, bill, user) => {
       userId: user._id,
       type: 'PAYMENT_SUCCESS',
       payload: { paymentId: payment._id, amount: formatPaise(payment.amountInPaise) },
+      skipStorage: forceDemo
     },
     () => sendPaymentSuccessEmail({
       to: user.email,

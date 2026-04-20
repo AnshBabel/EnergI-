@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BillService } from '../../services/bill.service';
@@ -43,7 +43,7 @@ Chart.register(...registerables);
     .pulse-glow { animation: pulse-glow 2s infinite; }
   `]
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('usageChart') usageChart!: ElementRef<HTMLCanvasElement>;
 
   user: User | null = null;
@@ -70,28 +70,33 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.sub.add(this.authState.user$.subscribe(user => {
       this.user = user;
-      if (user?.lastKnownReading) {
-        this.liveReading = user.lastKnownReading;
-      }
-      this.setupLiveMeter();
+      this.refreshMeterBase();
     }));
     
     // Watch for showcase mode toggle
     this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
+      this.refreshMeterBase();
       this.loadDashboard();
     }));
+  }
+
+  private refreshMeterBase(): void {
+    if (this.showcaseService.isShowcaseActive) {
+      this.liveReading = 1450.42; // Seeded mock reading
+    } else if (this.user?.lastKnownReading) {
+      this.liveReading = this.user.lastKnownReading;
+    }
+    this.setupLiveMeter();
   }
 
   setupLiveMeter(): void {
     if (this.meterInterval) clearInterval(this.meterInterval);
     
-    // Only tick if smart meter is enabled
-    if (this.user?.isSmartMeterEnabled) {
+    const isSmart = this.showcaseService.isShowcaseActive || this.user?.isSmartMeterEnabled;
+    if (isSmart) {
       this.meterInterval = setInterval(() => {
-        // Match the backend logic: (Rate / 3600) * ticks
-        // Let's just tick every 1s for a smooth UI feel
-        const rate = this.user?.consumptionRate || 0.2;
-        const tickIncrement = (rate / 3600) * 60; // 60x multiplier for demo
+        const rate = this.showcaseService.isShowcaseActive ? 1.2 : (this.user?.consumptionRate || 0.2);
+        const tickIncrement = (rate / 3600) * 80; // 80x multiplier for visual demo
         this.liveReading += tickIncrement + (Math.random() * 0.0001);
       }, 1000);
     }
@@ -198,5 +203,24 @@ export class DashboardComponent implements OnInit {
   isEligibleForEarlyBird(bill: any): boolean {
     if (!bill?.earlyBird?.eligibleUntil || bill.status !== 'UNPAID') return false;
     return new Date() <= new Date(bill.earlyBird.eligibleUntil);
+  }
+
+  get displayUser(): any {
+    if (this.showcaseService.isShowcaseActive && this.user?.role === 'CONSUMER') {
+      return {
+        name: 'Aditya Sharma',
+        email: 'aditya.sharma@example.com',
+        role: 'CONSUMER (DEMO)',
+        consumerId: 'EN-821901',
+        address: 'Sector 4, Dwarka, New Delhi'
+      };
+    }
+    return this.user;
+  }
+
+  ngOnDestroy(): void {
+    if (this.meterInterval) clearInterval(this.meterInterval);
+    if (this.chart) this.chart.destroy();
+    this.sub.unsubscribe();
   }
 }

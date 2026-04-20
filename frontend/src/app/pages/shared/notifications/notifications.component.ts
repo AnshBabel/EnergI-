@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService } from '../../../services/notification.service';
+import { ShowcaseService } from '../../../services/showcase.service';
 import { AppLayoutComponent } from '../../../components/layout/app-layout/app-layout.component';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-notifications',
@@ -149,14 +151,20 @@ import { trigger, transition, style, animate, query, stagger } from '@angular/an
     ])
   ]
 })
-export class NotificationsComponent implements OnInit {
+export class NotificationsComponent implements OnInit, OnDestroy {
   notifications: any[] = [];
   loading = true;
+  private sub = new Subscription();
 
-  constructor(private notifService: NotificationService) {}
+  constructor(
+    private notifService: NotificationService,
+    private showcaseService: ShowcaseService
+  ) {}
 
   ngOnInit(): void {
-    this.loadNotifications();
+    this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
+      this.loadNotifications();
+    }));
   }
 
   loadNotifications(): void {
@@ -193,5 +201,9 @@ export class NotificationsComponent implements OnInit {
         return `Your bill is currently overdue. Please clear your balance to avoid service interruption.`;
       default: return 'You have a new message regarding your account.';
     }
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
   }
 }

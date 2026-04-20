@@ -12,19 +12,7 @@ export class BillService {
     private showcaseService: ShowcaseService
   ) {}
 
-  listMy(params?: any): Observable<any> {
-    let httpParams = new HttpParams();
-    if (params) {
-      Object.keys(params).forEach(key => {
-        if (params[key] !== undefined && params[key] !== null) {
-          httpParams = httpParams.set(key, params[key]);
-        }
-      });
-    }
-    return this.http.get<any>(`${this.base}/my`, { params: httpParams });
-  }
-
-  listAll(params?: any): Observable<any> {
+  private getParams(params?: any): HttpParams {
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach(key => {
@@ -33,7 +21,18 @@ export class BillService {
         }
       });
     }
-    return this.http.get<any>(this.base, { params: httpParams });
+    if (this.showcaseService.isShowcaseActive) {
+      httpParams = httpParams.set('demo', 'true');
+    }
+    return httpParams;
+  }
+
+  listMy(params?: any): Observable<any> {
+    return this.http.get<any>(`${this.base}/my`, { params: this.getParams(params) });
+  }
+
+  listAll(params?: any): Observable<any> {
+    return this.http.get<any>(this.base, { params: this.getParams(params) });
   }
 
   generate(userId: string, data: any): Observable<any> {
@@ -41,36 +40,41 @@ export class BillService {
   }
 
   getOne(id: string): Observable<any> {
-    return this.http.get<any>(`${this.base}/${id}`);
+    return this.http.get<any>(`${this.base}/${id}`, { params: this.getParams() });
   }
 
   analytics(): Observable<any> {
-    return this.http.get<any>(`${this.base}/analytics`);
+    return this.http.get<any>(`${this.base}/analytics`, { params: this.getParams() });
   }
 
   getHistory(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/history`);
+    return this.http.get<any[]>(`${this.base}/history`, { params: this.getParams() });
   }
 
   getMyHistory(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/my-history`);
+    return this.http.get<any[]>(`${this.base}/my-history`, { params: this.getParams() });
   }
 
   pdfUrl(id: string): string {
     const token = localStorage.getItem('accessToken');
-    return `/api/v1/bills/${id}/pdf?token=${token}`;
+    let url = `/api/v1/bills/${id}/pdf?token=${token}`;
+    if (this.showcaseService.isShowcaseActive) url += '&demo=true';
+    return url;
   }
 
   exportCsv(): Observable<Blob> {
-    return this.http.get(`${this.base}/export`, { responseType: 'blob' });
+    return this.http.get(`${this.base}/export`, { 
+      params: this.getParams(),
+      responseType: 'blob' 
+    });
   }
 
   runCycle(month: number, year: number): Observable<any> {
-    return this.http.post<any>(`${this.base}/run-cycle`, { month, year });
+    return this.http.post<any>(`${this.base}/run-cycle`, { month, year }, { params: this.getParams() });
   }
 
   getIntelligence(): Observable<any> {
-    const params = this.showcaseService.isShowcaseActive ? new HttpParams().set('demo', 'true') : undefined;
-    return this.http.get<any>(`${this.base}/my-intelligence`, { params });
+    return this.http.get<any>(`${this.base}/my-intelligence`, { params: this.getParams() });
   }
 }
+

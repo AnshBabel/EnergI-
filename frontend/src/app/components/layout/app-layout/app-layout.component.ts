@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthState, User, Org } from '../../../state/auth.state';
 import { AuthService } from '../../../services/auth.service';
+import { Subscription } from 'rxjs';
 import { ThemeService } from '../../../services/theme.service';
 import { ShowcaseService } from '../../../services/showcase.service';
 
@@ -37,9 +38,10 @@ import { ShowcaseService } from '../../../services/showcase.service';
     .showcase-toggle-btn:not(.inactive) .toggle-knob { left: 16px; }
   `]
 })
-export class AppLayoutComponent implements OnInit {
+export class AppLayoutComponent implements OnInit, OnDestroy {
   user: User | null = null;
   org: Org | null = null;
+  private sub = new Subscription();
 
   constructor(
     private authState: AuthState,
@@ -50,8 +52,22 @@ export class AppLayoutComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authState.user$.subscribe(user => this.user = user);
-    this.authState.org$.subscribe(org => this.org = org);
+    this.sub.add(this.authState.user$.subscribe(user => this.user = user));
+    this.sub.add(this.authState.org$.subscribe(org => this.org = org));
+    // Listen for showcase toggle to trigger UI refresh
+    this.sub.add(this.showcaseService.showcaseMode$.subscribe());
+  }
+
+  get displayUser(): any {
+    if (this.showcaseService.isShowcaseActive && this.user?.role === 'CONSUMER') {
+      return {
+        name: 'Aditya Sharma',
+        email: 'aditya.sharma@example.com',
+        role: 'CONSUMER (DEMO)',
+        consumerId: 'EN-821901'
+      };
+    }
+    return this.user;
   }
 
   handleLogout(): void {
@@ -65,4 +81,10 @@ export class AppLayoutComponent implements OnInit {
       }
     });
   }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
 }
+
+

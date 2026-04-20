@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ShowcaseService } from './showcase.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private base = '/api/v1/notifications';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private showcaseService: ShowcaseService
+  ) {}
 
   listAll(params?: any): Observable<any> {
     let httpParams = new HttpParams();
@@ -17,6 +21,12 @@ export class NotificationService {
         }
       });
     }
+
+    if (this.showcaseService.isShowcaseActive) {
+      httpParams = httpParams.set('demo', 'true');
+    }
+
     return this.http.get<any>(this.base, { params: httpParams });
   }
 }
+

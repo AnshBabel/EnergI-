@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BillService } from '../../services/bill.service';
 import { UserService } from '../../services/user.service';
+import { ShowcaseService } from '../../services/showcase.service';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-admin-bills',
@@ -12,12 +14,13 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
   templateUrl: './bills.component.html',
   styles: []
 })
-export class BillsComponent implements OnInit {
+export class BillsComponent implements OnInit, OnDestroy {
   bills: any[] = [];
   consumers: any[] = [];
   loadingConsumers = false;
   loading = true;
   showModal = false;
+  private sub = new Subscription();
   error = '';
   saving = false;
   filterStatus = '';
@@ -34,11 +37,14 @@ export class BillsComponent implements OnInit {
 
   constructor(
     public billService: BillService,
-    private userService: UserService
+    private userService: UserService,
+    private showcaseService: ShowcaseService
   ) {}
 
   ngOnInit(): void {
-    this.load();
+    this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
+      this.load();
+    }));
   }
 
   load(): void {
@@ -105,7 +111,6 @@ export class BillsComponent implements OnInit {
   handleRunCycle(): void {
     if (!confirm('Are you sure you want to run the automated billing cycle? This will parse the database and generate bills for unbilled consumers.')) return;
     
-    // Defaulting to current month/year for the simulation cycle
     const month = new Date().getMonth() + 1;
     const year = new Date().getFullYear();
     
@@ -121,4 +126,9 @@ export class BillsComponent implements OnInit {
   formatAmount(paise: number): string {
     return `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
 }
+

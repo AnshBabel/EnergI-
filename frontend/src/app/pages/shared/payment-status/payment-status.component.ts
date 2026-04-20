@@ -18,10 +18,14 @@ import { AppLayoutComponent } from '../../../components/layout/app-layout/app-la
             <div class="pulse-ring"></div>
           </div>
 
+          <div class="demo-badge" *ngIf="isDemo">
+            <span class="sparkle">✨</span> Showcase Mode Active
+          </div>
+
           <h1 class="status-title">{{ isSuccess ? 'Payment Successful!' : 'Payment Cancelled' }}</h1>
           <p class="status-message">
             {{ isSuccess 
-              ? 'Thank you for your payment. Your bill has been updated and a receipt has been sent to your email.' 
+              ? (isDemo ? 'Showcase simulation complete. In a live environment, the bill would now be marked as PAID and a receipt generated.' : 'Thank you for your payment. Your bill has been updated and a receipt has been sent to your email.')
               : 'The payment process was cancelled. No charges were made to your account.' }}
           </p>
 
@@ -70,6 +74,23 @@ import { AppLayoutComponent } from '../../../components/layout/app-layout/app-la
     }
     .status-card.success::before { background: linear-gradient(90deg, #10B981, #34D399); }
     .status-card.error::before { background: linear-gradient(90deg, #EF4444, #F87171); }
+
+    .demo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.1);
+      color: #10B981;
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .sparkle { font-size: 14px; }
 
     .status-icon-wrapper {
       position: relative;
@@ -176,6 +197,7 @@ import { AppLayoutComponent } from '../../../components/layout/app-layout/app-la
 })
 export class PaymentStatusComponent implements OnInit {
   isSuccess = false;
+  isDemo = false;
   sessionId: string | null = null;
 
   constructor(
@@ -186,6 +208,7 @@ export class PaymentStatusComponent implements OnInit {
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       this.isSuccess = params['success'] === 'true';
+      this.isDemo = params['demo'] === 'true';
       this.sessionId = params['session_id'] || null;
     });
   }

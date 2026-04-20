@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TariffService } from '../../services/tariff.service';
+import { ShowcaseService } from '../../services/showcase.service';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-admin-tariff',
@@ -11,10 +13,11 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
   templateUrl: './tariff.component.html',
   styles: []
 })
-export class TariffComponent implements OnInit {
+export class TariffComponent implements OnInit, OnDestroy {
   tariffs: any[] = [];
   loading = true;
   showModal = false;
+  private sub = new Subscription();
   error = '';
   saving = false;
   Math = Math;
@@ -30,10 +33,15 @@ export class TariffComponent implements OnInit {
     ],
   };
 
-  constructor(private tariffService: TariffService) {}
+  constructor(
+    private tariffService: TariffService,
+    private showcaseService: ShowcaseService
+  ) {}
 
   ngOnInit(): void {
-    this.load();
+    this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
+      this.load();
+    }));
   }
 
   load(): void {
@@ -92,4 +100,9 @@ export class TariffComponent implements OnInit {
   formatPaise(p: number): string {
     return `₹${(p / 100).toFixed(2)}`;
   }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
 }
+

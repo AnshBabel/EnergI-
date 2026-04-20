@@ -2,10 +2,12 @@ import * as tariffService from '../services/tariffService.js';
 
 export const list = async (req, res, next) => {
   try {
-    const tariffs = await tariffService.listTariffs(req.user.organizationId);
+    const forceDemo = req.query.demo === 'true';
+    const tariffs = await tariffService.listTariffs(req.user.organizationId, { forceDemo });
     res.json({ tariffs });
   } catch (err) { next(err); }
 };
+
 
 export const create = async (req, res, next) => {
   try {

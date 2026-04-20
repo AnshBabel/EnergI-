@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
+import { ShowcaseService } from '../../services/showcase.service';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-admin-users',
@@ -11,10 +13,11 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
   templateUrl: './users.component.html',
   styles: []
 })
-export class UsersComponent implements OnInit {
+export class UsersComponent implements OnInit, OnDestroy {
   users: any[] = [];
   loading = true;
   showModal = false;
+  private sub = new Subscription();
   form = { 
     name: '', 
     email: '', 
@@ -28,10 +31,15 @@ export class UsersComponent implements OnInit {
   error = '';
   saving = false;
 
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private showcaseService: ShowcaseService
+  ) {}
 
   ngOnInit(): void {
-    this.load();
+    this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
+      this.load();
+    }));
   }
 
   load(): void {
@@ -71,4 +79,9 @@ export class UsersComponent implements OnInit {
       }
     });
   }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
 }
+

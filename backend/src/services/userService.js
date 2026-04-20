@@ -1,10 +1,16 @@
 import User from '../models/User.js';
 import * as authService from './authService.js';
+import { generateMockData } from '../utils/mockData.js';
 
 export const createConsumer = async (organizationId, data) =>
   authService.registerConsumer({ ...data, organizationId });
 
-export const listConsumers = async (organizationId, { page = 1, limit = 20 } = {}) => {
+export const listConsumers = async (organizationId, { page = 1, limit = 20, forceDemo = false } = {}) => {
+  if (forceDemo) {
+    const { users } = generateMockData(organizationId);
+    return { users, total: users.length, page: 1, totalPages: 1 };
+  }
+  
   const skip = (page - 1) * limit;
   const [users, total] = await Promise.all([
     User.find({ organizationId, role: 'CONSUMER' }).sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -12,6 +18,7 @@ export const listConsumers = async (organizationId, { page = 1, limit = 20 } = {
   ]);
   return { users, total, page, totalPages: Math.ceil(total / limit) };
 };
+
 
 export const getConsumerById = async (organizationId, userId) => {
   const user = await User.findOne({ _id: userId, organizationId });

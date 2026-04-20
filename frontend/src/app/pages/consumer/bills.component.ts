@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BillService } from '../../services/bill.service';
 import { PaymentService } from '../../services/payment.service';
 import { DisputeService } from '../../services/dispute.service';
+import { ShowcaseService } from '../../services/showcase.service';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-consumer-bills',
@@ -13,22 +15,26 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
   templateUrl: './bills.component.html',
   styles: []
 })
-export class BillsComponent implements OnInit {
+export class BillsComponent implements OnInit, OnDestroy {
   bills: any[] = [];
   loading = true;
   paying: string | null = null;
   disputeModal: any = null;
   disputeReason: string = '';
   disputeSaving = false;
+  private sub = new Subscription();
 
   constructor(
     public billService: BillService,
     private paymentService: PaymentService,
-    private disputeService: DisputeService
+    private disputeService: DisputeService,
+    private showcaseService: ShowcaseService
   ) {}
 
   ngOnInit(): void {
-    this.load();
+    this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
+      this.load();
+    }));
   }
 
   load(): void {
@@ -78,4 +84,9 @@ export class BillsComponent implements OnInit {
   formatAmount(paise: number): string {
     return `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
 }
+

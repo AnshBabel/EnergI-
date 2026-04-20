@@ -7,7 +7,27 @@ import * as billService from './billService.js';
  * Automated Billing Cycle logic.
  * Scans for users that need billing and generates bills in bulk.
  */
-export const runBillingCycle = async (organizationId, { month, year }) => {
+export const runBillingCycle = async (organizationId, { month, year, forceDemo = false }) => {
+  if (forceDemo) {
+    // Return simulated success for Showcase Mode
+    return {
+      total: 8,
+      success: 8,
+      failed: 0,
+      errors: [],
+      sampleCalculation: {
+        consumer: 'Aditya Sharma',
+        units: 142,
+        breakdown: [
+          { units: 100, rateInPaise: 450, chargeInPaise: 45000 },
+          { units: 42, rateInPaise: 650, chargeInPaise: 27300 }
+        ],
+        total: 92300,
+        estimated: false
+      }
+    };
+  }
+
   const consumers = await User.find({
     organizationId,
     role: 'CONSUMER',

@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BillService } from '../../services/bill.service';
+import { ShowcaseService } from '../../services/showcase.service';
 import { AuthState, User } from '../../state/auth.state';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
@@ -51,14 +52,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private billService: BillService,
+    private showcaseService: ShowcaseService,
     private authState: AuthState
   ) {}
 
   ngOnInit(): void {
     this.sub.add(this.authState.user$.subscribe(u => this.user = u));
     
-    this.loadDashboardData();
+    // Subscribe to Showcase Mode changes
+    this.sub.add(this.showcaseService.showcaseMode$.subscribe(() => {
+      this.loadDashboardData();
+    }));
   }
+
 
   loadDashboardData(): void {
     this.loading = true;

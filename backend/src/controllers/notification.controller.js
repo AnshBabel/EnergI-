@@ -1,23 +1,24 @@
-import Notification from '../models/Notification.js';
+import * as notificationService from '../services/notificationService.js';
 
 export const listAll = async (req, res, next) => {
   try {
+    const forceDemo = req.query.demo === 'true';
     const { page = 1, limit = 20 } = req.query;
-    const skip = (page - 1) * limit;
     
-    const query = { organizationId: req.user.organizationId };
+    const options = { 
+      page: Number(page), 
+      limit: Number(limit), 
+      forceDemo 
+    };
+
     if (req.user.role === 'CONSUMER') {
-      query.userId = req.user.userId;
+      options.userId = req.user.userId;
     }
 
-    const [notifications, total] = await Promise.all([
-      Notification.find(query)
-        .populate('userId', 'name email consumerId')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit)),
-      Notification.countDocuments(query),
-    ]);
+    const { notifications, total } = await notificationService.listNotifications(
+      req.user.organizationId, 
+      options
+    );
 
     res.json({
       notifications,
@@ -27,6 +28,7 @@ export const listAll = async (req, res, next) => {
     });
   } catch (err) { next(err); }
 };
+
 
 export const markAsRead = async (req, res, next) => {
   try {

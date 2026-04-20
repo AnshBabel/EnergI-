@@ -5,6 +5,8 @@ import { getActiveTariff } from './tariffService.js';
 import { calculateBill } from '../utils/billingEngine.js';
 import { queueBillGeneratedNotification } from './notificationService.js';
 import TariffConfig from '../models/TariffConfig.js';
+import { generateMockData } from '../utils/mockData.js';
+export { generateMockData };
 
 const DUE_DATE_DAYS = 15; // bills due 15 days after generation
 
@@ -68,16 +70,30 @@ export const generateBill = async (organizationId, userId, { previousReading, cu
   return bill;
 };
 
-export const getBillsByUser = async (organizationId, userId, { page = 1, limit = 10 } = {}) => {
+export const getBillsByUser = async (organizationId, userId, { page = 1, limit = 10, forceDemo = false } = {}) => {
+  if (forceDemo) {
+    const { bills, users } = generateMockData(organizationId);
+    // For individual consumer demo, we always show data for the first mock persona
+    const demoUser = users[0];
+    const userBills = bills.filter(b => b.userId._id.toString() === demoUser._id.toString());
+    return { bills: userBills, total: userBills.length, page: 1, totalPages: 1 };
+  }
+  
   const skip = (page - 1) * limit;
   const [bills, total] = await Promise.all([
-    Bill.find({ organizationId, userId }).sort({ billDate: -1 }).skip(skip).limit(limit),
+    Bill.find({ organizationId, userId }).sort({ billDate: -1 }).skip(skip).limit(limit).populate('userId', 'name email consumerId'),
     Bill.countDocuments({ organizationId, userId }),
   ]);
   return { bills, total, page, totalPages: Math.ceil(total / limit) };
 };
 
-export const getBillsByOrg = async (organizationId, { status, page = 1, limit = 20 } = {}) => {
+export const getBillsByOrg = async (organizationId, { status, page = 1, limit = 20, forceDemo = false } = {}) => {
+  if (forceDemo) {
+    let { bills } = generateMockData(organizationId);
+    if (status) bills = bills.filter(b => b.status === status);
+    return { bills, total: bills.length, page: 1, totalPages: 1 };
+  }
+  
   const query = { organizationId };
   if (status) query.status = status;
   const skip = (page - 1) * limit;
@@ -94,8 +110,28 @@ export const getBillById = async (organizationId, billId) => {
   return bill;
 };
 
-export const getOrgAnalytics = async (organizationId) => {
+export const getOrgAnalytics = async (organizationId, forceDemo = false) => {
   const orgId = new mongoose.Types.ObjectId(organizationId);
+  
+  if (forceDemo) {
+    const { bills } = generateMockData(organizationId);
+    const paid = bills.filter(b => b.status === 'PAID').reduce((sum, b) => sum + b.totalInPaise, 0);
+    const pending = bills.filter(b => b.status === 'UNPAID' && new Date(b.dueDate) >= new Date()).reduce((sum, b) => sum + b.totalInPaise, 0);
+    const overdue = bills.filter(b => b.status === 'UNPAID' && new Date(b.dueDate) < new Date()).reduce((sum, b) => sum + b.totalInPaise, 0);
+    
+    return {
+      totalCollectedInPaise: paid,
+      totalPendingInPaise: pending,
+      totalOverdueInPaise: overdue,
+      billCount: bills.length,
+      revenueMix: [
+        { label: 'Collected', value: paid, color: '#10B981' },
+        { label: 'Pending', value: pending, color: '#6366F1' },
+        { label: 'Overdue', value: overdue, color: '#EF4444' }
+      ]
+    };
+  }
+
   const [totalCollected, totalPending, totalOverdue, billCount] = await Promise.all([
     Bill.aggregate([
       { $match: { organizationId: orgId, status: 'PAID' } },
@@ -134,7 +170,20 @@ export const getAverageConsumption = async (userId) => {
   return Math.round(sum / history.length);
 };
 
-export const getOrgHistory = async (organizationId) => {
+export const getOrgHistory = async (organizationId, forceDemo = false) => {
+  if (forceDemo) {
+    const { bills } = generateMockData(organizationId);
+    // Group bills by month/year
+    const historyMap = {};
+    bills.forEach(b => {
+      const key = `${b.billingPeriod.month}/${b.billingPeriod.year}`;
+      if (!historyMap[key]) historyMap[key] = { _id: b.billingPeriod, collected: 0, pending: 0 };
+      if (b.status === 'PAID') historyMap[key].collected += b.totalInPaise;
+      else historyMap[key].pending += b.totalInPaise;
+    });
+    return Object.values(historyMap).sort((a,b) => b._id.year - a._id.year || b._id.month - a._id.month).slice(0, 6).reverse();
+  }
+  
   // Get last 6 months of data
   return Bill.aggregate([
     { $match: { organizationId: new mongoose.Types.ObjectId(organizationId) } },
@@ -152,7 +201,20 @@ export const getOrgHistory = async (organizationId) => {
 };
 
 
-export const getUserHistory = async (organizationId, userId) => {
+export const getUserHistory = async (organizationId, userId, forceDemo = false) => {
+  if (forceDemo) {
+    const { bills, users } = generateMockData(organizationId);
+    const demoUser = users[0];
+    return bills
+      .filter(b => b.userId._id.toString() === demoUser._id.toString())
+      .map(b => ({
+        _id: b.billingPeriod,
+        units: b.unitsConsumed,
+      }))
+      .slice(0, 6)
+      .reverse();
+  }
+  
   return Bill.aggregate([
     { $match: { 
       organizationId: new mongoose.Types.ObjectId(organizationId), 
@@ -175,13 +237,20 @@ export const getUserHistory = async (organizationId, userId) => {
  * Provides historical trends and actionable energy-saving insights
  */
 export const getIntelligence = async (userId, organizationId, forceDemo = false) => {
-  // 1. Fetch last 12 months history
-  const history = await Bill.find({ userId, organizationId })
-    .sort({ 'billingPeriod.year': -1, 'billingPeriod.month': -1 })
-    .limit(12);
+  let history;
+  if (forceDemo) {
+    const mock = generateMockData(organizationId);
+    // Always use the primary mock persona for individual consumer intelligence demo
+    const mockUser = mock.users[0];
+    history = mock.bills.filter(b => b.userId._id.toString() === mockUser._id.toString());
+  } else {
+    history = await Bill.find({ userId, organizationId })
+      .sort({ 'billingPeriod.year': -1, 'billingPeriod.month': -1 })
+      .limit(12);
+  }
 
   const hasRealHistory = history.length > 0 && !forceDemo;
-  const latest = hasRealHistory ? history[0] : {
+  const latest = history[0] || {
     _id: new mongoose.Types.ObjectId(),
     unitsConsumed: 120, // Default baseline for brand new users
     totalInPaise: 84000, 
@@ -190,13 +259,12 @@ export const getIntelligence = async (userId, organizationId, forceDemo = false)
   };
 
   // 2. Trend Calculations (Latest vs Previous Month)
-  const previous = history.length > 1 && !forceDemo ? history[1] : null;
+  const previous = history.length > 1 ? history[1] : null;
   
   let momTrend = 0;
   if (previous && previous.unitsConsumed > 0) {
     momTrend = ((latest.unitsConsumed - previous.unitsConsumed) / previous.unitsConsumed) * 100;
   }
-  // Note: if history < 2, momTrend stays 0 as requested for precision.
 
   // 3. Slab Optimization Advisor
   let insight = null;
@@ -233,46 +301,12 @@ export const getIntelligence = async (userId, organizationId, forceDemo = false)
       isIncreasing: momTrend > 0
     },
     insight,
-    history: (!hasRealHistory || forceDemo ? generateMockHistory(latest) : history).map(h => ({
-      period: h.period || `${h.billingPeriod.month}/${h.billingPeriod.year}`,
-      units: h.unitsConsumed || h.units,
-      amount: h.totalInPaise || h.amount
+    history: history.map(h => ({
+      period: `${h.billingPeriod.month}/${h.billingPeriod.year}`,
+      units: h.unitsConsumed,
+      amount: h.totalInPaise
     })).reverse()
   };
 };
 
-/**
- * Internal helper to generate stable, realistic mock history for demos.
- * Uses the latest bill's ID as a seed to ensure data stays the same on refresh.
- */
-function generateMockHistory(latest) {
-  const mock = [];
-  const startMonth = latest.billingPeriod.month;
-  const startYear = latest.billingPeriod.year;
-  
-  // Use a simple deterministic hash based on userId and months to keep it stable
-  const getStableVariance = (index) => {
-    const seed = parseInt(latest._id.toString().slice(-4), 16) || 123;
-    // This creates a deterministic but non-linear pattern [0.85, 1.15]
-    return 0.85 + (((seed * (index + 7)) % 30) / 100);
-  };
-
-  // Generate 5 months of fake data going backwards
-  for (let i = 0; i < 5; i++) {
-    let m = startMonth - i;
-    let y = startYear;
-    if (m <= 0) {
-      m += 12;
-      y -= 1;
-    }
-    
-    const variance = getStableVariance(i);
-    mock.push({
-      period: `${m}/${y}`,
-      units: Math.round(latest.unitsConsumed * variance),
-      amount: Math.round(latest.totalInPaise * variance)
-    });
-  }
-  return mock;
-}
 

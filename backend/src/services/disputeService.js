@@ -1,5 +1,6 @@
 import Dispute from '../models/Dispute.js';
 import Bill from '../models/Bill.js';
+import { generateMockData } from '../utils/mockData.js';
 
 export const raiseDispute = async (organizationId, userId, billId, reason) => {
   const bill = await Bill.findOne({ _id: billId, organizationId, userId });
@@ -16,7 +17,13 @@ export const raiseDispute = async (organizationId, userId, billId, reason) => {
   return Dispute.create({ organizationId, billId, userId, reason });
 };
 
-export const listDisputesByOrg = async (organizationId, { status, page = 1, limit = 20 } = {}) => {
+export const listDisputesByOrg = async (organizationId, { status, page = 1, limit = 20, forceDemo = false } = {}) => {
+  if (forceDemo) {
+    let { disputes } = generateMockData(organizationId);
+    if (status) disputes = disputes.filter(d => d.status === status);
+    return disputes.slice((page - 1) * limit, page * limit);
+  }
+  
   const query = { organizationId };
   if (status) query.status = status;
   return Dispute.find(query)
@@ -27,10 +34,18 @@ export const listDisputesByOrg = async (organizationId, { status, page = 1, limi
     .limit(limit);
 };
 
-export const listDisputesByUser = async (organizationId, userId) =>
-  Dispute.find({ organizationId, userId })
+export const listDisputesByUser = async (organizationId, userId, { forceDemo = false } = {}) => {
+  if (forceDemo) {
+    const { disputes, users } = generateMockData(organizationId);
+    const demoUser = users[0];
+    return disputes.filter(d => d.userId.toString() === demoUser._id.toString());
+  }
+
+  return Dispute.find({ organizationId, userId })
     .populate('billId', 'billingPeriod totalInPaise')
     .sort({ createdAt: -1 });
+};
+
 
 export const resolveDispute = async (organizationId, disputeId, { resolution, adminNote }) => {
   const dispute = await Dispute.findOne({ _id: disputeId, organizationId });

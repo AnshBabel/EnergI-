@@ -9,10 +9,12 @@ export const create = async (req, res, next) => {
 
 export const list = async (req, res, next) => {
   try {
-    const result = await userService.listConsumers(req.user.organizationId, req.query);
+    const forceDemo = req.query.demo === 'true';
+    const result = await userService.listConsumers(req.user.organizationId, { ...req.query, forceDemo });
     res.json(result);
   } catch (err) { next(err); }
 };
+
 
 export const getOne = async (req, res, next) => {
   try {
