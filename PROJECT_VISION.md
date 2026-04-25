@@ -28,10 +28,12 @@ To be a true SaaS, the system must support multiple independent organizations (t
 - **Dispute Workflow**: Consumers can flag a bill as "DISPUTED," which freezes the "PAID" status and alerts an admin for manual review.
 - **Advanced Analytics**: CSV and PDF exports for audit-ready financial reporting.
 
-### Phase 3: Visual & UX Mastery
-- **Glassmorphism UI**: A high-definition, energy-themed dashboard built with Angular 18 and CSS.
-- **Angular Animations**: Fluid transitions that provide visual feedback for complex data changes.
-- **Stealth Portal**: A hidden admin entry point triggered by specific keyboard sequences or secret URLs for enhanced privacy.
+### Phase 3: Visual & UX Mastery (Current)
+- **Glassmorphism UI**: A high-definition, energy-themed dashboard built with **Angular 18** and CSS.
+- **IoT Live Hub**: Real-time energy consumption monitoring with a digital matrix ticker (4 decimal precision).
+- **Showcase Mode**: High-fidelity demonstration mode with virtual personas and mock data loops.
+- **Smart Meter Emulation**: Automated usage tracking based on configurable household load profiles.
+- **Stealth Portal**: A hidden admin entry point for enhanced privacy.
 
 ## 5. Security & Compliance Layer
 - **Secret Management**: Strict `.gitignore` rules prevent sensitive keys and MongoDB strings from ever reaching public repositories.
