@@ -2,11 +2,23 @@
 
   <div class="auth-card" [@cardAnimation]>
     <div class="auth-logo">
-      <div class="mark">E</div>
-      <div>
-        <div style="font-weight: 700; font-size: 18px;">EnergI</div>
-        <div style="font-size: 11px; color: var(--color-text-muted);">Smart Energy Management</div>
-      </div>
+      <ng-container *ngIf="tenant; else defaultLogo">
+        <img *ngIf="tenant.logoUrl; else letterMark" [src]="tenant.logoUrl" alt="Logo" class="tenant-logo">
+        <ng-template #letterMark>
+          <div class="mark">{{ tenant.name.charAt(0).toUpperCase() }}</div>
+        </ng-template>
+        <div>
+          <div style="font-weight: 700; font-size: 18px;">{{ tenant.name }}</div>
+          <div style="font-size: 11px; color: var(--color-text-muted);">Tenant Portal</div>
+        </div>
+      </ng-container>
+      <ng-template #defaultLogo>
+        <div class="mark">E</div>
+        <div>
+          <div style="font-weight: 700; font-size: 18px;">EnergI</div>
+          <div style="font-size: 11px; color: var(--color-text-muted);">Smart Energy Management</div>
+        </div>
+      </ng-template>
     </div>
 
     <div class="role-selector mb-6">
@@ -30,35 +42,33 @@
     <div *ngIf="error" class="alert alert-error" [@fadeSlide]>{{ error }}</div>
 
     <form (submit)="handleSubmit($event)">
-      <div class="form-group" *ngIf="role === 'ADMIN'">
-        <label class="form-label">Organization Slug</label>
-        <div class="input-wrapper">
+      <ng-container *ngIf="!tenant">
+        <div class="form-group" *ngIf="role === 'ADMIN'">
+          <label class="form-label">Organization Slug</label>
+          <div class="input-wrapper">
+            <input
+              id="orgSlug"
+              class="form-input"
+              placeholder="e.g. green-valley"
+              [(ngModel)]="form.orgSlug"
+              name="orgSlug"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="role === 'CONSUMER'">
+          <label class="form-label">Society ID / Slug</label>
           <input
-            id="orgSlug"
+            id="consOrgSlug"
             class="form-input"
-            placeholder="e.g. green-valley"
+            placeholder="Provided by society"
             [(ngModel)]="form.orgSlug"
             name="orgSlug"
             required
           />
         </div>
-      </div>
-
-      <!-- Consumer might also need slug if they aren't on a custom domain, 
-           but per user request I'll keep it simpler for consumer mode 
-           provided we have a way to handle it or we still include it.
-           I'll keep it but style it smaller. -->
-      <div class="form-group" *ngIf="role === 'CONSUMER'">
-        <label class="form-label">Society ID / Slug</label>
-        <input
-          id="consOrgSlug"
-          class="form-input"
-          placeholder="Provided by society"
-          [(ngModel)]="form.orgSlug"
-          name="orgSlug"
-          required
-        />
-      </div>
+      </ng-container>
 
       <div class="form-group">
         <label class="form-label">Email Address</label>

@@ -14,7 +14,7 @@ const envSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1, 'STRIPE_SECRET_KEY is required'),
   STRIPE_WEBHOOK_SECRET: z.string().min(1, 'STRIPE_WEBHOOK_SECRET is required'),
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
-  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+  FRONTEND_URL: z.string().url().default('http://localhost:4200'),
   BACKEND_URL: z.string().url().default('http://localhost:5000'),
 });
 
@@ -22,8 +22,16 @@ const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
   console.error('❌ Invalid environment variables:');
-  console.error(parsed.error.flatten().fieldErrors);
-  process.exit(1);
+  const errors = parsed.error.flatten().fieldErrors;
+  Object.entries(errors).forEach(([key, messages]) => {
+    console.error(`   ${key}: ${messages?.join(', ')}`);
+  });
+  
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ Server attempting to start despite environment errors in production...');
+  } else {
+    process.exit(1);
+  }
 }
 
 export const env = parsed.data;

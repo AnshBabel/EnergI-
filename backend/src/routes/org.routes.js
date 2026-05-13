@@ -29,6 +29,10 @@ const upload = multer({
 });
 
 const router = Router();
+
+// Public route (must be before authenticate)
+router.get('/public/:slug', orgController.getPublicBranding);
+
 router.use(authenticate);
 
 router.get('/branding', orgController.getBranding);

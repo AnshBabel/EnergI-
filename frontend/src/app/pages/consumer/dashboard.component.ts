@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BillService } from '../../services/bill.service';
 import { PaymentService } from '../../services/payment.service';
+import { AiService, PredictiveInsights } from '../../services/ai.service';
 import { AuthState, User } from '../../state/auth.state';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
 import { Chart, registerables } from 'chart.js';
@@ -49,6 +50,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   user: User | null = null;
   bills: any[] = [];
   intelligence: any = null;
+  insights: PredictiveInsights | null = null;
   history: any[] = [];
   loading = true;
   loadingIntel = true;
@@ -64,7 +66,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private authState: AuthState,
     public billService: BillService,
     private paymentService: PaymentService,
-    private showcaseService: ShowcaseService
+    private showcaseService: ShowcaseService,
+    private aiService: AiService
   ) {}
 
   ngOnInit(): void {
@@ -108,11 +111,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     forkJoin({
       bills: this.billService.listMy({ limit: 3 }),
-      intel: this.billService.getIntelligence()
+      intel: this.billService.getIntelligence(),
+      insights: this.aiService.getInsights(this.showcaseService.isShowcaseActive)
     }).subscribe({
       next: (res) => {
         this.bills = res.bills.bills || [];
         this.intelligence = res.intel;
+        this.insights = res.insights;
         if (this.intelligence.hasHistory) {
           this.history = this.intelligence.history;
         }

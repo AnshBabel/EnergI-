@@ -7,6 +7,17 @@ export const getBranding = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+export const getPublicBranding = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const org = await Organization.findOne({ slug }).select('name slug logoUrl primaryColor');
+    if (!org) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+    res.json({ org });
+  } catch (err) { next(err); }
+};
+
 export const updateBranding = async (req, res, next) => {
   try {
     const allowed = ['name', 'primaryColor', 'contactEmail', 'footerText'];

@@ -12,6 +12,10 @@ export class OrgService {
     return this.http.get<any>(`${this.base}/branding`);
   }
 
+  getPublicBrandingBySlug(slug: string): Observable<any> {
+    return this.http.get<any>(`${this.base}/public/${slug}`);
+  }
+
   updateBranding(data: any): Observable<any> {
     return this.http.patch<any>(`${this.base}/branding`, data);
   }

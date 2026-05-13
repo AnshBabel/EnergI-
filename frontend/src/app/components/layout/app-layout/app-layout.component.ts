@@ -6,12 +6,13 @@ import { AuthService } from '../../../services/auth.service';
 import { Subscription } from 'rxjs';
 import { ThemeService } from '../../../services/theme.service';
 import { ShowcaseService } from '../../../services/showcase.service';
+import { AiCopilotComponent } from '../../ai-copilot/ai-copilot.component';
 
 
 @Component({
   selector: 'app-app-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, AiCopilotComponent],
   templateUrl: './app-layout.component.html',
   styles: [`
     .sidebar-footer { padding: 16px 12px; border-top: 1px solid var(--color-border); margin-top: auto; }

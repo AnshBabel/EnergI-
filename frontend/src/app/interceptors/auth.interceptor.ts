@@ -23,7 +23,7 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       // Avoid infinite loop if refresh also fails with 401
-      if (error.status === 401 && !req.url.includes('/auth/refresh') && !(req as any)['_retry']) {
+      if (error.status === 401 && !req.url.includes('/auth/refresh') && !req.url.includes('/auth/login') && !(req as any)['_retry']) {
         (req as any)['_retry'] = true;
         return http.post<any>('/api/v1/auth/refresh', {}, { withCredentials: true }).pipe(
           switchMap((data) => {

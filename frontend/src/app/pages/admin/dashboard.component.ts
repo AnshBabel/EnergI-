@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BillService } from '../../services/bill.service';
 import { ShowcaseService } from '../../services/showcase.service';
+import { AiService, AnomalyAlert } from '../../services/ai.service';
 import { AuthState, User } from '../../state/auth.state';
 import { AppLayoutComponent } from '../../components/layout/app-layout/app-layout.component';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
@@ -43,6 +44,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   user: User | null = null;
   history: any[] = [];
   recentBills: any[] = [];
+  anomalies: AnomalyAlert[] = [];
   loading = true;
   processingBatch = false;
   batchResult: any = null;
@@ -53,7 +55,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     private billService: BillService,
     private showcaseService: ShowcaseService,
-    private authState: AuthState
+    private authState: AuthState,
+    private aiService: AiService
   ) {}
 
   ngOnInit(): void {
@@ -71,12 +74,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     forkJoin({
       analytics: this.billService.analytics(),
       bills: this.billService.listAll({ limit: 5 }),
-      history: this.billService.getHistory()
+      history: this.billService.getHistory(),
+      anomaliesRes: this.aiService.getAdminAnomalies(this.showcaseService.isShowcaseActive)
     }).subscribe({
       next: (res) => {
         this.analytics = res.analytics;
         this.recentBills = res.bills?.bills || [];
         this.history = res.history || [];
+        this.anomalies = res.anomaliesRes?.anomalies || [];
         
         // Safety Guard: Only init charts if possible
         setTimeout(() => {

@@ -3,6 +3,11 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Routes
 import authRoutes from './routes/auth.routes.js';
@@ -13,6 +18,7 @@ import paymentRoutes from './routes/payment.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import disputeRoutes from './routes/dispute.routes.js';
 import userRoutes from './routes/user.routes.js';
+import aiRoutes from './routes/ai.routes.js';
 
 const app = express();
 
@@ -20,6 +26,10 @@ const app = express();
 app.use(helmet());
 
 app.use('/uploads', express.static('uploads'));
+
+// Serve Frontend Static Files (Production)
+const distPath = path.join(__dirname, '../../frontend/dist/energi-frontend/browser');
+app.use(express.static(distPath));
 
 // CORS
 app.use(cors({
@@ -42,13 +52,25 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/disputes', disputeRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/ai', aiRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// 404 handler
+// Catch-all for Angular routes (must come after API routes)
+app.get('*', (req, res, next) => {
+  if (req.url.startsWith('/api')) return next();
+  res.sendFile(path.join(distPath, 'index.html'), (err) => {
+    if (err) {
+      // If index.html is missing (e.g. build not run), fall back to 404
+      res.status(404).json({ error: 'Frontend not found' });
+    }
+  });
+});
+
+// 404 handler (for API routes only if next() was called)
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });

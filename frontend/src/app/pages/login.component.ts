@@ -1,9 +1,10 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { trigger, transition, style, animate, state } from '@angular/animations';
 import { AuthService } from '../services/auth.service';
+import { TenantService, TenantInfo } from '../services/tenant.service';
 
 @Component({
   selector: 'app-login',
@@ -91,16 +92,37 @@ import { AuthService } from '../services/auth.service';
     .password-toggle:hover {
       color: var(--color-text);
     }
+    .tenant-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      object-fit: contain;
+      background: white;
+    }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   role: 'ADMIN' | 'CONSUMER' = 'CONSUMER'; // Default to Consumer for "Stealth" feels
   form = { email: '', password: '', orgSlug: '' };
   error = '';
   loading = false;
   showPassword = false;
+  tenant: TenantInfo | null = null;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private tenantService: TenantService
+  ) {}
+
+  ngOnInit(): void {
+    this.tenantService.tenant$.subscribe(t => {
+      this.tenant = t;
+      if (t) {
+        this.form.orgSlug = t.slug;
+      }
+    });
+  }
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
