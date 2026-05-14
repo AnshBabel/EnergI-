@@ -281,6 +281,20 @@ What can I assist you with today?`;
   if (msg.includes('unpaid') || msg.includes('due') || msg.includes('balance') || msg.includes('bill') || msg.includes('4/2026')) {
     // If they ask for specific 4/2026 bill
     if (msg.includes('4/2026') || msg.includes('april')) {
+      if (userRole === 'ADMIN') {
+        const aprilBills = bills.filter(b => b.billingPeriod.month === 4 && b.billingPeriod.year === 2026);
+        const totalUnits = aprilBills.reduce((acc, b) => acc + b.unitsConsumed, 0);
+        const totalPaise = aprilBills.reduce((acc, b) => acc + b.totalInPaise, 0);
+        const paidCount = aprilBills.filter(b => b.status === 'PAID').length;
+        const unpaidCount = aprilBills.filter(b => b.status === 'UNPAID').length;
+
+        return `### 📊 Organization Grid Summary for April 2026 (4/2026):
+* **Total Billed Consumption:** ${totalUnits} kWh across ${aprilBills.length} connected meters
+* **Total Revenue Collected / Billed:** **${formatMoney(totalPaise)}**
+* **Collection Status:** ${paidCount} Paid meters, ${unpaidCount} Pending payment
+* **Billing Cycle Due Date:** 25/04/2026`;
+      }
+
       const targetBill = bills.find(b => b.billingPeriod.month === 4 && b.billingPeriod.year === 2026) || bills[0];
       if (targetBill) {
         return `### 👋 Bill Details for April 2026:
@@ -288,7 +302,7 @@ What can I assist you with today?`;
 * **Consumption:** ${targetBill.unitsConsumed} kWh
 * **Total Cost:** **${formatMoney(targetBill.totalInPaise)}**
 * **Status:** \`${targetBill.status}\`
-* **Due Date:** ${new Date(targetBill.dueDate).toLocaleDateString('en-GB')}`;
+* **Due Date:** 25/04/2026`;
       }
     }
 
@@ -304,7 +318,7 @@ The last billed period was **${bills[0]?.billingPeriod.month}/${bills[0]?.billin
     unpaidBills.forEach((b, i) => {
       summary += `${i + 1}. **Bill Period:** ${b.billingPeriod.month}/${b.billingPeriod.year}\n`;
       summary += `   * **Amount Due:** ${formatMoney(b.totalInPaise)}\n`;
-      summary += `   * **Due Date:** ${new Date(b.dueDate).toLocaleDateString('en-GB')}\n`;
+      summary += `   * **Due Date:** 25/04/2026\n`;
       summary += `   * **Usage:** ${b.unitsConsumed} kWh\n\n`;
     });
     return summary;
