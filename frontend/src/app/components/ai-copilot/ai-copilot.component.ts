@@ -345,6 +345,7 @@ export class AiCopilotComponent implements OnInit, OnDestroy {
   ];
 
   private sub = new Subscription();
+  private lastShowcaseMode: boolean | null = null;
 
   constructor(
     private aiService: AiService,
@@ -354,19 +355,25 @@ export class AiCopilotComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Watch current user status to hide AI button if logged out
     this.sub.add(this.authState.user$.subscribe(user => {
       this.currentUser = user;
       if (!user) {
         this.isOpen = false;
+        sessionStorage.removeItem('copilot_messages');
       } else {
         this.resetChat();
       }
     }));
 
-    // Watch showcase mode to switch simulation flows
     this.sub.add(this.showcaseService.showcaseMode$.subscribe(mode => {
+      const isToggle = this.lastShowcaseMode !== null && this.lastShowcaseMode !== mode;
+      this.lastShowcaseMode = mode;
       this.isShowcaseActive = mode;
+
+      if (isToggle) {
+        sessionStorage.removeItem('copilot_messages');
+      }
+
       if (this.currentUser) {
         this.resetChat();
       }
@@ -385,6 +392,17 @@ export class AiCopilotComponent implements OnInit, OnDestroy {
   }
 
   private resetChat(): void {
+    const saved = sessionStorage.getItem('copilot_messages');
+    if (saved) {
+      try {
+        this.messages = JSON.parse(saved);
+        this.scrollToBottom();
+        return;
+      } catch (e) {
+        sessionStorage.removeItem('copilot_messages');
+      }
+    }
+
     this.messages = [
       {
         sender: 'assistant',
@@ -395,6 +413,7 @@ Ask me anything, or try selecting a quick action below.`,
         timestamp: new Date()
       }
     ];
+    sessionStorage.setItem('copilot_messages', JSON.stringify(this.messages));
     this.scrollToBottom();
   }
 
@@ -402,20 +421,18 @@ Ask me anything, or try selecting a quick action below.`,
     const text = this.userInput.trim();
     if (!text || this.isTyping) return;
 
-    // 1. Append User Message
     this.messages.push({
       sender: 'user',
       text,
       timestamp: new Date()
     });
+    sessionStorage.setItem('copilot_messages', JSON.stringify(this.messages));
     this.userInput = '';
     this.scrollToBottom();
 
-    // 2. Trigger Typing Indicator
     this.isTyping = true;
     this.scrollToBottom();
 
-    // 3. Make HTTP request
     this.aiService.getChatResponse(text, this.isShowcaseActive).subscribe({
       next: (res) => {
         this.messages.push({
@@ -423,6 +440,7 @@ Ask me anything, or try selecting a quick action below.`,
           text: res.response,
           timestamp: new Date()
         });
+        sessionStorage.setItem('copilot_messages', JSON.stringify(this.messages));
       },
       error: (err) => {
         this.messages.push({
@@ -431,6 +449,7 @@ Ask me anything, or try selecting a quick action below.`,
 Failed to communicate with the Copilot AI engine. Please ensure your development server is active.`,
           timestamp: new Date()
         });
+        sessionStorage.setItem('copilot_messages', JSON.stringify(this.messages));
       },
       complete: () => {
         this.isTyping = false;
