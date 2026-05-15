@@ -15,8 +15,9 @@ export function roleGuard(requiredRole: string): CanActivateFn {
         if (authState.user?.role === requiredRole) {
           return true;
         }
-        // Redirect to correct dashboard based on role
-        if (authState.user?.role === 'ADMIN') {
+        if (authState.user?.role === 'SUPER_ADMIN') {
+          router.navigate(['/superadmin/dashboard']);
+        } else if (authState.user?.role === 'ADMIN') {
           router.navigate(['/admin/dashboard']);
         } else if (authState.user?.role === 'CONSUMER') {
           router.navigate(['/consumer/dashboard']);

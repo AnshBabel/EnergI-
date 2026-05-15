@@ -80,6 +80,20 @@ export const login = async (req, res, next) => {
   }
 };
 
+export const loginSuperAdmin = async (req, res, next) => {
+  try {
+    const { user, org, tokens } = await authService.loginSuperAdmin(req.body);
+    res.cookie('refreshToken', tokens.refreshToken, COOKIE_OPTIONS);
+    res.json({
+      accessToken: tokens.accessToken,
+      user,
+      org,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const refresh = async (req, res, next) => {
   try {
     const { refreshToken } = req.cookies;

@@ -22,12 +22,29 @@ import { DashboardComponent as ConsumerDashboard } from './pages/consumer/dashbo
 import { BillsComponent as ConsumerBills } from './pages/consumer/bills.component';
 import { DisputesComponent as ConsumerDisputes } from './pages/consumer/disputes.component';
 
+// Super Admin Pages
+import { SuperAdminDashboardComponent } from './pages/superadmin/super-admin-dashboard.component';
+import { SuperAdminMongodbComponent } from './pages/superadmin/super-admin-mongodb.component';
+import { MaintenanceComponent } from './pages/maintenance.component';
+
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'maintenance', component: MaintenanceComponent },
   { path: 'payment/status', component: PaymentStatusComponent, canActivate: [authGuard] },
+
+  // Super Admin Routes
+  {
+    path: 'superadmin',
+    canActivate: [authGuard, roleGuard('SUPER_ADMIN')],
+    children: [
+      { path: 'dashboard', component: SuperAdminDashboardComponent },
+      { path: 'mongodb', component: SuperAdminMongodbComponent },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+    ]
+  },
 
   // Admin Routes
   {

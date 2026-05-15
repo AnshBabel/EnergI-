@@ -1,7 +1,7 @@
 <app-app-layout>
   <div class="page-header" [@fadeInUp]>
-    <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -1px; margin: 0;">Welcome, {{ displayUser?.name }} 👋</h1>
-    <p class="text-muted" style="margin-top: 4px;">Managing your energy for <strong>{{ displayUser?.address || 'your home' }}</strong></p>
+    <h1 class="welcome-title">Welcome, {{ displayUser?.name }} 👋</h1>
+    <p class="welcome-subtitle">Managing your energy for <strong>{{ displayUser?.address || 'your home' }}</strong></p>
   </div>
 
   <div *ngIf="loading" class="flex-center" style="height: 200px;">
@@ -23,29 +23,29 @@
       </div>
       
       <!-- Slab Advisor Insight -->
-      <div class="stat-card insight-card" *ngIf="intelligence.insight" [style.borderLeftColor]="'#F59E0B'">
-        <div class="stat-label" style="color: var(--color-warning)">💡 Energy Saving Tip</div>
-        <div class="text-sm mt-1" style="color: var(--color-text)">
+      <div class="stat-card insight-card stagger-item" *ngIf="intelligence.insight">
+        <div class="stat-label text-warning">💡 Energy Saving Tip</div>
+        <div class="text-sm mt-1 text-main">
           {{ intelligence.insight.message }}
         </div>
-        <div class="stat-icon" style="opacity: 0.3;">⚡</div>
+        <div class="stat-icon-muted">⚡</div>
       </div>
 
       <!-- General Health Insight -->
-      <div class="stat-card" *ngIf="!intelligence.insight">
+      <div class="stat-card stagger-item" *ngIf="!intelligence.insight">
         <div class="stat-label">Energy Health</div>
-        <div class="stat-value" style="color: var(--color-success)">OPTIMAL</div>
+        <div class="stat-value text-success">OPTIMAL</div>
         <div class="text-xs text-muted">Usage within standard bracket</div>
-        <div class="stat-icon" style="opacity: 0.2">☘️</div>
+        <div class="stat-icon-muted">☘️</div>
       </div>
 
       <!-- NEW: IoT Live Meter Card -->
-      <div class="stat-card" *ngIf="user?.isSmartMeterEnabled" style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.02)); border: 1px solid rgba(16,185,129,0.3);">
+      <div class="stat-card live-meter-card stagger-item" *ngIf="user?.isSmartMeterEnabled">
         <div class="flex-between">
-          <div class="stat-label" style="color: #10B981; font-weight: 700;">📡 LIVE SMART METER</div>
-          <span class="pulse-glow" style="width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+          <div class="stat-label text-success-bold">📡 LIVE SMART METER</div>
+          <span class="live-dot-pulse"></span>
         </div>
-        <div class="stat-value" style="font-family: 'Courier New', monospace; letter-spacing: 2px; color: var(--color-text);">
+        <div class="stat-value meter-reading">
           {{ liveReading.toFixed(4) }} <span class="text-sm">kWh</span>
         </div>
         <div class="text-xs text-muted mt-1">Real-time IoT data syncing...</div>
@@ -53,22 +53,22 @@
     </div>
 
     <!-- NEW: AI Forecast Billing Card -->
-    <div *ngIf="insights" class="card mb-6" [@fadeInUp] style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(139, 92, 246, 0.02) 100%); border: 1px solid rgba(124, 58, 237, 0.25); position: relative; overflow: hidden;">
-      <div style="position: absolute; top: -10px; right: -10px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
+    <div *ngIf="insights" class="card mb-6 forecast-card" [@fadeInUp]>
+      <div class="forecast-glow"></div>
       
       <div class="flex-between" style="align-items: flex-start; flex-wrap: wrap; gap: 16px;">
         <div style="flex: 1; min-width: 250px;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 16px;">🔮</span>
-            <span style="color: var(--color-primary-light, #a78bfa); font-weight: 700; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">AI Energy Copilot Forecast</span>
+            <span class="forecast-label">AI Energy Copilot Forecast</span>
           </div>
           
-          <h3 style="margin: 8px 0 4px 0; font-size: 20px; font-weight: 700; color: var(--color-text);">Estimated Month-End Bill</h3>
+          <h3 class="forecast-title">Estimated Month-End Bill</h3>
           <p class="text-muted text-xs" style="margin: 0 0 16px 0;">Calculated by extrapolating your live smart meter consumption rate</p>
           
           <!-- Large projection display -->
           <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px;">
-            <span style="font-size: 36px; font-weight: 800; letter-spacing: -1.5px; color: var(--color-primary-light, #a78bfa);">
+            <span class="forecast-value">
               {{ formatAmount(insights.projectedTotalInPaise) }}
             </span>
             <span class="text-muted text-sm">/ {{ insights.projectedUnits }} kWh estimated</span>
@@ -80,37 +80,37 @@
               <span>Billing Cycle Progress: {{ insights.daysElapsed }} / {{ insights.daysTotal }} days elapsed</span>
               <span style="font-weight: 600;">{{ ((insights.daysElapsed / insights.daysTotal) * 100) | number:'1.0-0' }}%</span>
             </div>
-            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden;">
-              <div [style.width.%]="(insights.daysElapsed / insights.daysTotal) * 100" style="height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 99px;"></div>
+            <div class="cycle-progress-bg">
+              <div class="cycle-progress-bar" [style.width.%]="(insights.daysElapsed / insights.daysTotal) * 100"></div>
             </div>
           </div>
         </div>
 
         <!-- Right Side: Live telemetry & Anomaly Panel -->
-        <div style="flex: 1; min-width: 250px; background: rgba(15, 23, 42, 0.3); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 12px;">
+        <div class="telemetry-panel">
           <div class="flex-between mb-3" style="align-items: center;">
-            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: rgba(255,255,255,0.4); text-transform: uppercase;">Copilot Telemetry</span>
-            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981; font-size: 10px;">ONLINE</span>
+            <span class="telemetry-label">Copilot Telemetry</span>
+            <span class="badge telemetry-online-badge">ONLINE</span>
           </div>
           
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <div class="flex-between text-sm">
               <span class="text-muted">Live Reading:</span>
-              <strong style="font-family: monospace;">{{ insights.currentReading.toFixed(2) }} kWh</strong>
+              <strong class="telemetry-reading">{{ insights.currentReading.toFixed(2) }} kWh</strong>
             </div>
             <div class="flex-between text-sm">
               <span class="text-muted">Current Month Consumption:</span>
-              <strong>{{ insights.unitsConsumedSoFar }} kWh</strong>
+              <strong class="text-main">{{ insights.unitsConsumedSoFar }} kWh</strong>
             </div>
           </div>
 
           <!-- System Alerts loop -->
-          <div *ngIf="insights.anomalies.length > 0" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);">
-            <div style="color: var(--color-danger); font-size: 11px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+          <div *ngIf="insights.anomalies.length > 0" class="telemetry-alerts-section">
+            <div class="telemetry-alert-header">
               <span>⚠️</span> ACTIVE AI ANOMALY DETECTION
             </div>
-            <div *ngFor="let alert of insights.anomalies" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 11.5px; line-height: 1.4; color: rgba(255, 255, 255, 0.85);">
-              <strong style="color: #f87171;">[{{ alert.severity }}]</strong> {{ alert.description }}
+            <div *ngFor="let alert of insights.anomalies" class="telemetry-alert-box">
+              <strong class="text-danger">[{{ alert.severity }}]</strong> {{ alert.description }}
             </div>
           </div>
 
@@ -122,11 +122,11 @@
     </div>
 
     <!-- Current Bill Hero Card -->
-    <div *ngIf="latestBill" class="card mb-6" [@fadeInUp] [style.background]="isOverdue ? 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05))' : 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(167,139,250,0.05))'" [style.borderColor]="isOverdue ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.3)'">
+    <div *ngIf="latestBill" class="card mb-6 bill-hero-card" [@fadeInUp] [class.is-overdue]="isOverdue">
       <div class="flex-between">
         <div>
           <div class="text-muted text-sm">Current Bill — {{ latestBill.billingPeriod?.month }}/{{ latestBill.billingPeriod?.year }}</div>
-          <div [style.color]="isOverdue ? 'var(--color-danger)' : 'var(--color-primary-light)'" style="font-size: 48px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin: 8px 0;">
+          <div class="bill-amount" [class.overdue-text]="isOverdue">
             {{ formatAmount(latestBill.totalInPaise) }}
           </div>
           <div class="text-muted">{{ latestBill.unitsConsumed }} kWh consumed</div>
@@ -138,10 +138,9 @@
           
           <!-- NEW: Early Bird Banner -->
           <div *ngIf="isEligibleForEarlyBird(latestBill)" 
-               class="mt-3 pulse-glow" 
-               style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+               class="mt-3 early-bird-banner">
             <span style="font-size: 16px;">✨</span>
-            <div style="font-size: 12px; color: #10B981; font-weight: 600;">
+            <div class="early-bird-text">
               Early-Bird Discount: Pay before {{ latestBill.earlyBird.eligibleUntil | date:'dd MMM' }} and save {{ formatAmount(latestBill.earlyBird.discountAmountInPaise) }}!
             </div>
           </div>

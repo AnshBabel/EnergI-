@@ -19,6 +19,9 @@ import notificationRoutes from './routes/notification.routes.js';
 import disputeRoutes from './routes/dispute.routes.js';
 import userRoutes from './routes/user.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import superAdminRoutes from './routes/superadmin.routes.js';
+
+import { checkMaintenance } from './middleware/maintenance.js';
 
 const app = express();
 
@@ -43,6 +46,9 @@ app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(cookieParser());
 
+// Maintenance Check (Global for API)
+app.use('/api', checkMaintenance);
+
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/org', orgRoutes);
@@ -53,6 +59,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/disputes', disputeRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/superadmin', superAdminRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {

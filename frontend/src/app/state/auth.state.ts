@@ -5,7 +5,7 @@ export interface User {
   _id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'CONSUMER';
+  role: 'ADMIN' | 'CONSUMER' | 'SUPER_ADMIN';
   consumerId?: string;
   meterNumber?: string;
   phone?: string;

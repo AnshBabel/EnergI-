@@ -99,15 +99,106 @@ import { TenantService, TenantInfo } from '../services/tenant.service';
       object-fit: contain;
       background: white;
     }
+    .superadmin-hud {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(24px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeInHUD 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes fadeInHUD {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .hud-card {
+      width: 420px;
+      background: #0f172a;
+      border: 1px solid rgba(239, 68, 68, 0.3); /* Neon Red Accent */
+      box-shadow: 0 0 60px rgba(239, 68, 68, 0.2);
+      border-radius: 24px;
+      padding: 32px;
+      position: relative;
+    }
+    .close-hud {
+      position: absolute;
+      top: 20px; right: 20px;
+      background: rgba(255,255,255,0.05);
+      border: none;
+      color: white;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .close-hud:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+    .hud-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .glow-shield {
+      font-size: 48px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.5));
+      animation: pulseHUD 2s infinite;
+    }
+    @keyframes pulseHUD {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.5)); }
+      50% { transform: scale(1.08); filter: drop-shadow(0 0 35px rgba(239, 68, 68, 0.8)); }
+    }
+    .hud-title {
+      color: white;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin: 0; font-size: 20px;
+    }
+    .hud-subtitle {
+      color: #ef4444; font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    }
+    .hud-label {
+      color: rgba(255,255,255,0.6); font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    }
+    .hud-input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white; padding: 12px 16px; border-radius: 12px; width: 100%; font-size: 14px;
+      margin-top: 6px; outline: none; transition: all 0.3s;
+    }
+    .hud-input:focus {
+      border-color: #ef4444; background: rgba(239, 68, 68, 0.05);
+    }
+    .hud-submit {
+      width: 100%; padding: 14px; background: linear-gradient(135deg, #ef4444, #b91c1c);
+      color: white; font-weight: 800; letter-spacing: 1.5px; font-size: 13px; border: none;
+      border-radius: 14px; cursor: pointer; box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+      transition: all 0.3s; margin-top: 12px;
+    }
+    .hud-submit:hover {
+      transform: translateY(-2px); box-shadow: 0 12px 32px rgba(239, 68, 68, 0.6);
+    }
   `]
 })
 export class LoginComponent implements OnInit {
-  role: 'ADMIN' | 'CONSUMER' = 'CONSUMER'; // Default to Consumer for "Stealth" feels
+  role: 'ADMIN' | 'CONSUMER' = 'CONSUMER'; 
   form = { email: '', password: '', orgSlug: '' };
   error = '';
   loading = false;
   showPassword = false;
   tenant: TenantInfo | null = null;
+
+  // Super Admin HUD State
+  showSuperAdminModal = false;
+  superAdminForm = { email: '', password: '' };
+  superAdminError = '';
+  superAdminLoading = false;
+  showSuperPassword = false;
 
   constructor(
     private authService: AuthService, 
@@ -128,12 +219,20 @@ export class LoginComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
+  toggleSuperPassword(): void {
+    this.showSuperPassword = !this.showSuperPassword;
+  }
+
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    // Stealth shortcut: Ctrl/Cmd + Shift + A (Admin)
     if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'a') {
       this.setRole('ADMIN');
       console.log('⚡ Stealth Admin Portal Activated');
+    }
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      this.showSuperAdminModal = true;
+      console.log('👑 Super Admin Security HUD Unlocked');
     }
   }
 
@@ -149,7 +248,6 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(this.form).subscribe({
       next: (data) => {
-        // Validation: Ensure the role matched the expected one
         if (data.user.role !== this.role) {
           this.error = `This account is a ${data.user.role} account. Please use the correct tab.`;
           this.loading = false;
@@ -164,6 +262,30 @@ export class LoginComponent implements OnInit {
       },
       complete: () => {
         this.loading = false;
+      }
+    });
+  }
+
+  handleSuperAdminSubmit(e: Event): void {
+    e.preventDefault();
+    this.superAdminError = '';
+    this.superAdminLoading = true;
+
+    this.authService.loginSuperAdmin(this.superAdminForm).subscribe({
+      next: (data) => {
+        if (data.user.role !== 'SUPER_ADMIN') {
+          this.superAdminError = 'Unauthorized access.';
+          this.superAdminLoading = false;
+          return;
+        }
+        this.router.navigate(['/superadmin/dashboard']);
+      },
+      error: (err) => {
+        this.superAdminError = err.error?.error || 'Invalid credentials.';
+        this.superAdminLoading = false;
+      },
+      complete: () => {
+        this.superAdminLoading = false;
       }
     });
   }

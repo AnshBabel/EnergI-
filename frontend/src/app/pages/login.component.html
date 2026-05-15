@@ -1,6 +1,6 @@
 <div class="auth-page">
 
-  <div class="auth-card" [@cardAnimation]>
+  <div class="auth-card" [@cardAnimation] *ngIf="!showSuperAdminModal">
     <div class="auth-logo">
       <ng-container *ngIf="tenant; else defaultLogo">
         <img *ngIf="tenant.logoUrl; else letterMark" [src]="tenant.logoUrl" alt="Logo" class="tenant-logo">
@@ -117,5 +117,65 @@
     <p class="text-muted mt-4" style="text-align: center;">
       New organization? <a routerLink="/register" style="color: var(--color-primary-light);">Register here</a>
     </p>
+  </div>
+
+  <!-- 👑 High-Tech Super Admin Security HUD Overlay -->
+  <div *ngIf="showSuperAdminModal" class="superadmin-hud animate-in">
+    <div class="hud-card">
+      <button class="close-hud" (click)="showSuperAdminModal = false">✕</button>
+      <div class="hud-header">
+        <div class="glow-shield">🛡️</div>
+        <h2 class="hud-title">SUPER ADMIN HUD</h2>
+        <span class="hud-subtitle">Restricted Security Portal</span>
+      </div>
+
+      <div *ngIf="superAdminError" class="alert alert-error">{{ superAdminError }}</div>
+
+      <form (submit)="handleSuperAdminSubmit($event)">
+        <div class="form-group">
+          <label class="hud-label">AUTHORIZATION CODE (EMAIL)</label>
+          <input
+            type="email"
+            class="hud-input"
+            placeholder="superadmin@energi.com"
+            [(ngModel)]="superAdminForm.email"
+            name="superEmail"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="hud-label">BIOMETRIC / CIPHER KEY</label>
+          <div class="input-wrapper" style="position: relative;">
+            <input
+              id="superPassword"
+              [type]="showSuperPassword ? 'text' : 'password'"
+              class="hud-input"
+              placeholder="••••••••"
+              [(ngModel)]="superAdminForm.password"
+              name="superPassword"
+              style="padding-right: 40px;"
+              required
+            />
+            <button type="button" class="password-toggle" (click)="toggleSuperPassword()" style="color: rgba(255,255,255,0.6);">
+              <!-- Full Eye (Visible Password) -->
+              <svg *ngIf="showSuperPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <!-- Stroke Eye (Hidden Password) -->
+              <svg *ngIf="!showSuperPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="hud-submit" [disabled]="superAdminLoading">
+          {{ superAdminLoading ? 'VERIFYING CIPHER...' : 'ENGAGE COMMAND CENTER' }}
+        </button>
+      </form>
+    </div>
   </div>
 </div>

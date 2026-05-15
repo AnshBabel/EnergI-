@@ -34,6 +34,17 @@ export class AuthService {
     );
   }
 
+  loginSuperAdmin(data: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/superadmin/login`, data).pipe(
+      tap((res) => {
+        localStorage.setItem('accessToken', res.accessToken);
+        this.authState.setUser(res.user);
+        this.authState.setOrg(res.org);
+        this.applyBranding(res.org);
+      })
+    );
+  }
+
   logout(): Observable<any> {
     return this.http.post<any>(`${this.base}/logout`, {}).pipe(
       tap(() => {

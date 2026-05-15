@@ -37,11 +37,55 @@ Chart.register(...registerables);
     ])
   ],
   styles: [`
-    .trend-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
-    .trend-up { background: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
-    .trend-down { background: rgba(16, 185, 129, 0.1); color: var(--color-success); }
-    .insight-card { border-left: 4px solid var(--color-primary); background: linear-gradient(90deg, rgba(124, 58, 237, 0.05) 0%, transparent 100%); }
-    .pulse-glow { animation: pulse-glow 2s infinite; }
+    .welcome-title { font-size: 32px; font-weight: 800; letter-spacing: -1px; margin: 0; color: var(--color-text); }
+    .welcome-subtitle { color: var(--color-text-muted); margin-top: 4px; font-size: 14px; }
+    
+    .text-warning { color: var(--color-warning) !important; }
+    .text-success { color: var(--color-success) !important; }
+    .text-danger { color: var(--color-danger) !important; }
+    .text-main { color: var(--color-text) !important; }
+    .text-success-bold { color: #10B981; font-weight: 700; }
+    
+    .stat-icon-muted { font-size: 24px; opacity: 0.2; position: absolute; right: 20px; top: 20px; }
+    
+    .live-meter-card { 
+      background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.02)); 
+      border: 1px solid rgba(16,185,129,0.3); 
+    }
+    .live-dot-pulse { width: 8px; height: 8px; border-radius: 50%; background: #10B981; box-shadow: 0 0 10px #10B981; animation: pulseDot 1.5s infinite; }
+    .meter-reading { font-family: 'Courier New', monospace; letter-spacing: 2px; color: var(--color-text); }
+
+    .forecast-card { 
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(139, 92, 246, 0.02) 100%); 
+      border: 1px solid rgba(124, 58, 237, 0.25); 
+      position: relative; overflow: hidden;
+    }
+    .forecast-glow { position: absolute; top: -10px; right: -10px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%); pointer-events: none; }
+    .forecast-label { color: var(--color-primary-light); font-weight: 700; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; }
+    .forecast-title { margin: 8px 0 4px 0; font-size: 20px; font-weight: 700; color: var(--color-text); }
+    .forecast-value { font-size: 36px; font-weight: 800; letter-spacing: -1.5px; color: var(--color-primary-light); }
+    
+    .cycle-progress-bg { width: 100%; height: 6px; background: var(--color-border); border-radius: 99px; overflow: hidden; }
+    .cycle-progress-bar { height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 99px; }
+
+    .telemetry-panel { flex: 1; min-width: 250px; background: var(--color-surface-2); border: 1px solid var(--color-border); padding: 16px; border-radius: 12px; }
+    .telemetry-label { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--color-text-muted); text-transform: uppercase; }
+    .telemetry-online-badge { background: rgba(16, 185, 129, 0.1); color: #10B981; font-size: 10px; }
+    .telemetry-reading { font-family: monospace; color: var(--color-text); }
+    
+    .telemetry-alerts-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+    .telemetry-alert-header { color: var(--color-danger); font-size: 11px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+    .telemetry-alert-box { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 11.5px; line-height: 1.4; color: var(--color-text); }
+
+    .bill-hero-card { background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(167,139,250,0.05)); border: 1px solid rgba(124,58,237,0.3); }
+    .bill-hero-card.is-overdue { background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05)); border-color: rgba(239,68,68,0.3); }
+    .bill-amount { font-size: 48px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin: 8px 0; color: var(--color-primary-light); }
+    .overdue-text { color: var(--color-danger) !important; }
+    
+    .early-bird-banner { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; }
+    .early-bird-text { font-size: 12px; color: #10B981; font-weight: 600; }
+    
+    @keyframes pulseDot { 0% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0.4; transform: scale(0.8); } }
   `]
 })
 export class DashboardComponent implements OnInit, OnDestroy {

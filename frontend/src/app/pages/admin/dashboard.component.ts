@@ -17,6 +17,56 @@ Chart.register(...registerables);
   standalone: true,
   imports: [CommonModule, RouterLink, AppLayoutComponent],
   templateUrl: './dashboard.component.html',
+  styles: [`
+    .header-main-title { font-size: 32px; font-weight: 800; letter-spacing: -1px; margin: 0; color: var(--color-text); }
+    .header-subtitle { color: var(--color-text-muted); margin-top: 4px; font-size: 14px; }
+    
+    .card-purple { border-left: 4px solid var(--color-primary); }
+    .card-amber { border-left: 4px solid var(--color-warning); }
+    .card-danger { border-left: 4px solid var(--color-danger); }
+    .card-cyan { border-left: 4px solid #06b6d4; }
+    
+    .text-warning { color: var(--color-warning) !important; }
+    .text-danger { color: var(--color-danger) !important; }
+
+    .command-center-card { 
+      background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(99,102,241,0.05)); 
+      border: 1px solid rgba(124,58,237,0.2); 
+    }
+    .command-title { margin: 0; font-weight: 700; color: var(--color-primary-light); }
+    .command-subtitle { color: var(--color-text-muted); font-size: 13px; }
+
+    .ai-anomaly-card { 
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%); 
+      border: 1px solid rgba(239, 68, 68, 0.2); 
+    }
+    .card-header-flex-alt { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+    .card-header-icon { font-size: 24px; }
+    .card-header-title { margin: 0; font-weight: 700; color: var(--color-text); font-size: 18px; }
+    .card-header-subtitle { color: var(--color-text-muted); font-size: 12px; margin-top: 2px; }
+    
+    .anomaly-count-badge { 
+      background: rgba(16, 185, 129, 0.1); color: var(--color-success); 
+      font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 11px; padding: 6px 12px; 
+    }
+    .anomaly-count-badge.has-alerts { 
+      background: rgba(239, 68, 68, 0.1); color: var(--color-danger); 
+      border-color: rgba(239, 68, 68, 0.2); 
+    }
+
+    .anomaly-empty-state { text-align: center; padding: 24px 0; color: var(--color-success); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
+    
+    .user-name-alt { font-weight: 600; color: var(--color-text); }
+    .meter-number-alt { color: var(--color-text-muted); font-size: 11px; font-family: monospace; letter-spacing: 0.5px; }
+    .type-badge { background: var(--color-surface-2); color: var(--color-text); border: 1px solid var(--color-border); font-size: 11px; }
+    
+    .severity-badge { font-weight: 800; font-size: 10px; padding: 4px 8px; }
+    .severity-high { background: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
+    .severity-medium { background: rgba(245, 158, 11, 0.1); color: var(--color-warning); }
+    .severity-low { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+    
+    .anomaly-description { color: var(--color-text-muted); font-size: 13px; line-height: 1.5; }
+  `],
   animations: [
     trigger('fadeInUp', [
       transition(':enter', [

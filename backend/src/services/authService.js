@@ -116,6 +116,18 @@ export const login = async ({ email, password, orgSlug }) => {
   return { user, org, tokens };
 };
 
+export const loginSuperAdmin = async ({ email, password }) => {
+  const user = await User.findOne({ email: email.toLowerCase().trim(), role: 'SUPER_ADMIN' });
+  if (!user) throw Object.assign(new Error('Invalid Super Admin credentials'), { status: 401 });
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) throw Object.assign(new Error('Invalid Super Admin credentials'), { status: 401 });
+
+  const org = await Organization.findById(user.organizationId);
+  const tokens = generateTokens(user._id.toString(), org._id.toString(), user.role);
+  return { user, org, tokens };
+};
+
 export const refreshAccessToken = (refreshToken) => {
   const payload = verifyRefreshToken(refreshToken);
   const { accessToken } = generateTokens(payload.userId, payload.organizationId, payload.role);

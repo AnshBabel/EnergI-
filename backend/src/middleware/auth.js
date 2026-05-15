@@ -21,6 +21,12 @@ export const authenticate = (req, res, next) => {
       organizationId: payload.organizationId,
       role: payload.role,
     };
+
+    // Track activity in background (Import User model dynamically to avoid circular dependencies if any)
+    import('../models/User.js').then(m => {
+      m.default.findByIdAndUpdate(payload.userId, { lastActiveAt: new Date() }).exec().catch(() => {});
+    });
+
     next();
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token' });
@@ -37,6 +43,13 @@ export const requireAdmin = (req, res, next) => {
 export const requireConsumer = (req, res, next) => {
   if (req.user?.role !== 'CONSUMER') {
     return res.status(403).json({ error: 'Consumer access required' });
+  }
+  next();
+};
+
+export const requireSuperAdmin = (req, res, next) => {
+  if (req.user?.role !== 'SUPER_ADMIN') {
+    return res.status(403).json({ error: 'Super Admin access required' });
   }
   next();
 };

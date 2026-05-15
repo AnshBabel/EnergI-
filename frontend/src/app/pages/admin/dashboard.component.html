@@ -1,7 +1,7 @@
 <app-app-layout>
   <div class="page-header" [@fadeInUp]>
-    <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -1px; margin: 0;">Welcome back, {{ user?.name }} 👋</h1>
-    <p class="text-muted" style="margin-top: 4px;">Here's what's happening with your energy network today.</p>
+    <h1 class="header-main-title">Welcome back, {{ user?.name }} 👋</h1>
+    <p class="header-subtitle">Here's what's happening with your energy network today.</p>
   </div>
 
   <div *ngIf="loading" class="flex-center" style="height: 400px; flex-direction: column; gap: 1rem;">
@@ -11,26 +11,26 @@
 
   <ng-container *ngIf="!loading">
     <div class="stats-grid" [@staggerList]>
-      <div class="stat-card stagger-item">
+      <div class="stat-card stagger-item card-purple">
         <span class="stat-icon">💰</span>
         <div class="stat-label">Total Collected</div>
         <div class="stat-value">{{ formatAmount(analytics?.totalCollectedInPaise || 0) }}</div>
       </div>
-      <div class="stat-card stagger-item">
+      <div class="stat-card stagger-item card-amber">
         <span class="stat-icon">⏳</span>
         <div class="stat-label">Pending</div>
-        <div class="stat-value" style="color: var(--color-warning);">
+        <div class="stat-value text-warning">
           {{ formatAmount(analytics?.totalPendingInPaise || 0) }}
         </div>
       </div>
-      <div class="stat-card stagger-item">
+      <div class="stat-card stagger-item card-danger">
         <span class="stat-icon">🔴</span>
         <div class="stat-label">Overdue</div>
-        <div class="stat-value" style="color: var(--color-danger);">
+        <div class="stat-value text-danger">
           {{ formatAmount(analytics?.totalOverdueInPaise || 0) }}
         </div>
       </div>
-      <div class="stat-card stagger-item">
+      <div class="stat-card stagger-item card-cyan">
         <span class="stat-icon">📄</span>
         <div class="stat-label">Total Bills</div>
         <div class="stat-value">{{ analytics?.billCount || 0 }}</div>
@@ -38,11 +38,11 @@
     </div>
 
     <!-- NEW: Batch Operations Command Card -->
-    <div class="card mb-6" [@fadeInUp] style="background: linear-gradient(135deg, rgba(124,58,237,0.05), rgba(99,102,241,0.05)); border: 1px solid rgba(124,58,237,0.2);">
+    <div class="card mb-6 command-center-card" [@fadeInUp]>
       <div class="flex-between">
         <div>
-          <h3 style="margin: 0; font-weight: 700; color: var(--color-primary-light);">⚡ Command Center</h3>
-          <p class="text-muted text-sm mt-1">Execute organization-wide batch operations and billing cycles.</p>
+          <h3 class="command-title">⚡ Command Center</h3>
+          <p class="command-subtitle mt-1">Execute organization-wide batch operations and billing cycles.</p>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
           <div *ngIf="batchResult" class="text-sm" style="color: var(--color-success); border-right: 1px solid var(--color-border); padding-right: 12px;">
@@ -59,21 +59,21 @@
     </div>
 
     <!-- NEW: AI Grid Anomalies Dashboard Card -->
-    <div class="card mb-6" [@fadeInUp] style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.04) 0%, rgba(239, 68, 68, 0.01) 100%); border: 1px solid rgba(239, 68, 68, 0.25);">
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 20px;">🛡️</span>
+    <div class="card mb-6 ai-anomaly-card" [@fadeInUp]>
+      <div class="card-header-flex-alt">
+        <div class="flex align-center gap-3">
+          <span class="card-header-icon">🛡️</span>
           <div>
-            <h3 style="margin: 0; font-weight: 700; color: var(--color-text);">AI Grid Telemetry & Anomaly Center</h3>
-            <p class="text-muted text-xs mt-1">Real-time neural scanning for network leaks, payment debt, and smart meter failures.</p>
+            <h3 class="card-header-title">AI Grid Telemetry & Anomaly Center</h3>
+            <p class="card-header-subtitle">Real-time neural scanning for network leaks, payment debt, and smart meter failures.</p>
           </div>
         </div>
-        <span class="badge" [style.background]="anomalies.length > 0 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)'" [style.color]="anomalies.length > 0 ? '#f87171' : '#10B981'" style="font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.05); font-size: 11px; padding: 4px 10px;">
+        <span class="badge anomaly-count-badge" [class.has-alerts]="anomalies.length > 0">
           {{ anomalies.length }} active alerts
         </span>
       </div>
 
-      <div *ngIf="anomalies.length === 0" style="text-align: center; padding: 24px 0; color: #10B981; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+      <div *ngIf="anomalies.length === 0" class="anomaly-empty-state">
         <span>☘️</span> All smart meters and network billing components running optimally. No leaks.
       </div>
 
@@ -90,20 +90,20 @@
           <tbody>
             <tr *ngFor="let alert of anomalies">
               <td>
-                <div style="font-weight: 600; color: var(--color-text);">{{ alert.userName || 'Anonymous Grid Member' }}</div>
-                <div class="text-muted" style="font-size: 11px; font-family: monospace; letter-spacing: 0.5px;">Meter: {{ alert.meterNumber }}</div>
+                <div class="user-name-alt">{{ alert.userName || 'Anonymous Grid Member' }}</div>
+                <div class="meter-number-alt">Meter: {{ alert.meterNumber }}</div>
               </td>
               <td>
-                <span class="badge" style="background: rgba(255,255,255,0.05); color: var(--color-text); border: 1px solid rgba(255,255,255,0.08); font-size: 11px;">
+                <span class="badge type-badge">
                   {{ alert.type }}
                 </span>
               </td>
               <td>
-                <span class="badge" [style.background]="alert.severity === 'HIGH' ? 'rgba(239, 68, 68, 0.1)' : alert.severity === 'MEDIUM' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)'" [style.color]="alert.severity === 'HIGH' ? '#f87171' : alert.severity === 'MEDIUM' ? '#fbbf24' : '#60a5fa'" style="font-weight: 800; font-size: 10px;">
+                <span class="badge severity-badge" [ngClass]="'severity-' + alert.severity.toLowerCase()">
                   {{ alert.severity }}
                 </span>
               </td>
-              <td class="text-muted" style="font-size: 12.5px; line-height: 1.4;">{{ alert.description }}</td>
+              <td class="anomaly-description">{{ alert.description }}</td>
             </tr>
           </tbody>
         </table>

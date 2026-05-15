@@ -49,6 +49,7 @@ router.post(
 );
 
 router.post('/login', authRateLimit, authController.login);
+router.post('/superadmin/login', authRateLimit, authController.loginSuperAdmin);
 router.post('/refresh', authController.refresh);
 router.post('/logout', authController.logout);
 

@@ -5,6 +5,17 @@
       <span class="logo-text">{{ org?.name || 'EnergI' }}</span>
     </div>
 
+    <!-- Super Admin Nav -->
+    <nav class="sidebar-nav" *ngIf="user?.role === 'SUPER_ADMIN'">
+      <p class="nav-section-label">Enterprise SaaS</p>
+      <a routerLink="/superadmin/dashboard" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">👑</span> Cloud Oversight
+      </a>
+      <a routerLink="/superadmin/mongodb" routerLinkActive="active" class="nav-item" style="padding-left: 24px;">
+        <span class="nav-icon">🗄️</span> MongoDB Cloud
+      </a>
+    </nav>
+
     <!-- Admin Nav -->
     <nav class="sidebar-nav" *ngIf="user?.role === 'ADMIN'">
       <p class="nav-section-label">Overview</p>
@@ -54,7 +65,8 @@
 
     <div class="sidebar-footer">
 
-      <button class="showcase-toggle-btn" 
+      <button *ngIf="user?.role !== 'SUPER_ADMIN'"
+              class="showcase-toggle-btn" 
               [class.inactive]="!showcaseService.isShowcaseActive"
               (click)="showcaseService.toggleShowcaseMode()">
         <span>✨ Showcase Mode</span>

@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['ADMIN', 'CONSUMER'],
+      enum: ['ADMIN', 'CONSUMER', 'SUPER_ADMIN'],
       default: 'CONSUMER',
     },
     meterNumber: { type: String, trim: true },
@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema(
     consumptionRate: { type: Number, default: 0.2 }, // Units per virtual hour
 
     lastBillingDate: { type: Date, default: null },
+    lastActiveAt: { type: Date, default: Date.now },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

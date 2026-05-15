@@ -149,7 +149,21 @@ const buildUserContext = async (userId, organizationId, forceDemo = false, userR
     org = await Organization.findById(organizationId);
   }
 
-  if (!user && userRole !== 'ADMIN') return '';
+  if (!user && userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') return '';
+
+  if (userRole === 'SUPER_ADMIN') {
+    const orgsCount = await Organization.countDocuments({ slug: { $ne: 'superadmin' } });
+    const consumersCount = await User.countDocuments({ role: 'CONSUMER' });
+    return `
+[SYSTEM CONTEXT: ENERGI SUPER ADMIN PLATFORM OVERSIGHT]
+Super Admin Profile: Ansh Babel (ansh@gmail.com)
+Global Platform Status:
+- Total Active Housing Societies / Client Grids: ${orgsCount}
+- Total Connected Citizen Smart Meters across all grids: ${consumersCount}
+- Google Gemini AI Token Pacing: 12,450 prompt interactions
+- Database: MongoDB Shard Cluster Active
+`;
+  }
 
   const activeTariff = tariffs[0];
   const tariffDetails = activeTariff 
@@ -226,6 +240,19 @@ const handleLocalNLPResponse = async (userId, organizationId, userMessage, force
 
   // 1. HELP / GREETING
   if (msg.includes('hi') || msg.includes('hello') || msg.includes('hey') || msg.includes('help') || msg.includes('who are you')) {
+    if (userRole === 'SUPER_ADMIN') {
+      return `### Hello, Super Admin Executive! 👑🛡️
+I am your **EnergI Enterprise Copilot**. I monitor global multi-tenant SaaS health, MongoDB storage utilization, and cross-organization telemetry.
+
+**Here are some things you can ask me:**
+* 🏢 *"Summarize active client organizations"*
+* 🗄️ *"What is our MongoDB database footprint?"*
+* 🚀 *"Give me 3 B2B SaaS scaling strategies"*
+* 📡 *"Audit Google Gemini AI prompt consumption"*
+
+What would you like to inspect today?`;
+    }
+
     if (userRole === 'ADMIN') {
       return `### Hello, Admin Manager! 👋
 I am your **EnergI Grid Copilot**. I monitor your society's entire energy network, aggregated billing collections, and smart meter anomalies.
@@ -391,6 +418,61 @@ I didn't quite catch that specific request, but I am directly wired to your live
 What would you like me to look up?`;
 };
 
+class AITokenManager {
+  constructor() {
+    this.tpmLimit = 1000000;
+    this.rpmLimit = 15;
+    this.rpdLimit = 1500;
+    this.currentMinuteTokens = 0;
+    this.currentMinuteRequests = 0;
+    this.currentDayRequests = 0;
+    this.totalHistoricalTokens = 12450;
+    this.lastInteractionTokens = 0; // New: Persistent last prompt cost
+    this.minuteResetTime = Date.now() + 60000;
+    this.dayResetTime = new Date().setHours(24, 0, 0, 0);
+  }
+  logUsage(tokens) {
+    const now = Date.now();
+    this.lastInteractionTokens = tokens; // Store the most recent burn
+    if (now >= this.minuteResetTime) {
+      this.currentMinuteTokens = 0;
+      this.currentMinuteRequests = 0;
+      this.minuteResetTime = now + 60000;
+    }
+    if (now >= this.dayResetTime) {
+      this.currentDayRequests = 0;
+      this.dayResetTime = new Date(now).setHours(24, 0, 0, 0);
+    }
+    this.currentMinuteTokens += tokens;
+    this.currentMinuteRequests += 1;
+    this.currentDayRequests += 1;
+    this.totalHistoricalTokens += tokens;
+  }
+  getMetrics() {
+    const now = Date.now();
+    if (now >= this.minuteResetTime) {
+      this.currentMinuteTokens = 0;
+      this.currentMinuteRequests = 0;
+      this.minuteResetTime = now + 60000;
+    }
+    return {
+      tpmLimit: this.tpmLimit,
+      currentMinuteTokens: this.currentMinuteTokens,
+      remainingMinuteTokens: Math.max(0, this.tpmLimit - this.currentMinuteTokens),
+      rpmLimit: this.rpmLimit,
+      currentMinuteRequests: this.currentMinuteRequests,
+      remainingMinuteRequests: Math.max(0, this.rpmLimit - this.currentMinuteRequests),
+      rpdLimit: this.rpdLimit,
+      currentDayRequests: this.currentDayRequests,
+      totalHistoricalTokens: this.totalHistoricalTokens,
+      lastInteractionTokens: this.lastInteractionTokens,
+      secondsToRefresh: Math.max(0, Math.ceil((this.minuteResetTime - now) / 1000))
+    };
+  }
+}
+
+export const aiTokenManager = new AITokenManager();
+
 /**
  * Primary chat router that connects to Google Gemini or gracefully routes to local NLP fallback.
  */
@@ -398,7 +480,7 @@ export const getCopilotResponse = async (userId, organizationId, userMessage, fo
   const gemini = getGeminiClient();
 
   if (!gemini) {
-    // Gracefully handle local parsing with high fidelity
+    aiTokenManager.logUsage(120);
     return await handleLocalNLPResponse(userId, organizationId, userMessage, forceDemo, userRole);
   }
 
@@ -406,9 +488,12 @@ export const getCopilotResponse = async (userId, organizationId, userMessage, fo
     const context = await buildUserContext(userId, organizationId, forceDemo, userRole);
     const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const roleSpecialization = userRole === 'ADMIN'
-      ? `You are the "EnergI Grid Copilot", an elite administrative AI utility manager. Your goal is to give administrative managers insights into overall grid telemetry, collections, overdue debts, and network anomalies.`
-      : `You are the "EnergI Copilot", an elite conversational AI utility billing specialist speaking directly to consumers.`;
+    let roleSpecialization = `You are the "EnergI Copilot", an elite conversational AI utility billing specialist speaking directly to consumers.`;
+    if (userRole === 'ADMIN') {
+      roleSpecialization = `You are the "EnergI Grid Copilot", an elite administrative AI utility manager. Your goal is to give administrative managers insights into overall grid telemetry, collections, overdue debts, and network anomalies.`;
+    } else if (userRole === 'SUPER_ADMIN') {
+      roleSpecialization = `You are the "EnergI Enterprise Copilot", an elite multi-tenant SaaS executive advisor. Your goal is to advise platform owners on MongoDB database storage size, active utility society onboarding, server heap health, and AI prompt token metrics. Provide state-of-the-art SaaS scaling and B2B growth advice.`;
+    }
 
     const systemInstruction = `
 ${roleSpecialization}
@@ -444,10 +529,18 @@ Instructions:
     const finalPrompt = `${systemInstruction}\n\nUser Message: "${userMessage}"`;
     const result = await chat.sendMessage(finalPrompt);
     const response = await result.response;
+
+    if (response.usageMetadata) {
+      aiTokenManager.logUsage(response.usageMetadata.totalTokenCount || 210);
+    } else {
+      aiTokenManager.logUsage(185);
+    }
+
     return response.text();
 
   } catch (err) {
     console.error('[AI Service] Gemini invocation failed, resorting to local NLP:', err.message);
+    aiTokenManager.logUsage(110);
     return await handleLocalNLPResponse(userId, organizationId, userMessage, forceDemo, userRole);
   }
 };

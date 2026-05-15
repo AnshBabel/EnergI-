@@ -41,6 +41,11 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
           })
         );
       }
+      if (error.status === 503 && !req.url.includes('/superadmin')) {
+        router.navigate(['/maintenance']);
+        return throwError(() => error);
+      }
+
       return throwError(() => error);
     })
   );
