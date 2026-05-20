@@ -133,29 +133,3 @@ export class MaintenanceComponent implements OnInit, OnDestroy {
     });
   }
 }
-    
-    .background-glow {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 600px; height: 600px; background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-  `],
-  animations: [
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'scale(0.95)' }),
-        animate('0.6s cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'scale(1)' }))
-      ])
-    ])
-  ]
-})
-export class MaintenanceComponent {}

@@ -14,6 +14,7 @@ export interface User {
   isSmartMeterEnabled?: boolean;
   lastKnownReading?: number;
   consumptionRate?: number;
+  isShowcaseAccount?: boolean;
   createdAt?: string;
 }
 

@@ -2,12 +2,17 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { AuthState, User, Org } from '../state/auth.state';
+import { ShowcaseService } from './showcase.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private base = '/api/v1/auth';
 
-  constructor(private http: HttpClient, private authState: AuthState) {}
+  constructor(
+    private http: HttpClient, 
+    private authState: AuthState,
+    private showcaseService: ShowcaseService
+  ) {}
 
   /**
    * Updated to accept FormData to support Logo and Signature uploads
@@ -19,6 +24,7 @@ export class AuthService {
         this.authState.setUser(res.user);
         this.authState.setOrg(res.org);
         this.applyBranding(res.org);
+        if (!res.user.isShowcaseAccount) this.showcaseService.disableShowcaseMode();
       })
     );
   }
@@ -30,6 +36,7 @@ export class AuthService {
         this.authState.setUser(res.user);
         this.authState.setOrg(res.org);
         this.applyBranding(res.org);
+        if (!res.user.isShowcaseAccount) this.showcaseService.disableShowcaseMode();
       })
     );
   }
@@ -75,6 +82,7 @@ export class AuthService {
         this.authState.setUser(meData.user);
         this.authState.setOrg(brandData.org);
         this.applyBranding(brandData.org);
+        if (!meData.user.isShowcaseAccount) this.showcaseService.disableShowcaseMode();
       })
       .catch((err) => {
         console.error('Auth Init failed:', err);

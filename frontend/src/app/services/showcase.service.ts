@@ -25,4 +25,11 @@ export class ShowcaseService {
   get isShowcaseActive(): boolean {
     return this.showcaseSubject.value;
   }
+
+  disableShowcaseMode(): void {
+    if (this.showcaseSubject.value) {
+      this.showcaseSubject.next(false);
+      localStorage.setItem(this.STORAGE_KEY, 'false');
+    }
+  }
 }

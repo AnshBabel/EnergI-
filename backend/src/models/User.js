@@ -36,6 +36,9 @@ const userSchema = new mongoose.Schema(
     lastKnownReading: { type: Number, default: 0 },
     consumptionRate: { type: Number, default: 0.2 }, // Units per virtual hour
 
+    // Showcase Feature Access
+    isShowcaseAccount: { type: Boolean, default: false },
+
     lastBillingDate: { type: Date, default: null },
     lastActiveAt: { type: Date, default: Date.now },
     isActive: { type: Boolean, default: true },
