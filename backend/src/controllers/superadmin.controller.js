@@ -192,6 +192,12 @@ export const updateDocument = async (req, res) => {
     const { collectionName, id } = req.params;
     const updateData = { ...req.body };
     delete updateData._id; // Ensure _id is immutable
+    delete updateData.passwordHash; // Protect passwords from accidental corruption in JSON editor
+
+    // Auto-cast known ObjectIds to prevent breaking Mongoose lookups
+    if (updateData.organizationId && typeof updateData.organizationId === 'string') {
+      try { updateData.organizationId = new mongoose.Types.ObjectId(updateData.organizationId); } catch (e) {}
+    }
 
     if (!mongoose.connection.db) {
       return res.status(500).json({ error: 'Mongoose database connection not active' });
