@@ -58,6 +58,7 @@ export const registerAdmin = async ({
       email: email.toLowerCase().trim(),
       passwordHash,
       role: 'ADMIN',
+      isShowcaseAccount: true,
     });
 
     const tokens = generateTokens(user._id.toString(), org._id.toString(), user.role);
@@ -98,7 +99,8 @@ export const registerConsumer = async ({
     address,
     phone,
     isSmartMeterEnabled,
-    consumptionRate
+    consumptionRate,
+    isShowcaseAccount: true
   });
 };
 

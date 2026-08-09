@@ -65,7 +65,7 @@
 
     <div class="sidebar-footer">
 
-      <button *ngIf="user?.role !== 'SUPER_ADMIN' && user?.isShowcaseAccount"
+      <button *ngIf="user?.role !== 'SUPER_ADMIN'"
               class="showcase-toggle-btn" 
               [class.inactive]="!showcaseService.isShowcaseActive"
               (click)="showcaseService.toggleShowcaseMode()">

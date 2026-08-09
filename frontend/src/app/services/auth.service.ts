@@ -24,7 +24,7 @@ export class AuthService {
         this.authState.setUser(res.user);
         this.authState.setOrg(res.org);
         this.applyBranding(res.org);
-        if (!res.user.isShowcaseAccount) this.showcaseService.disableShowcaseMode();
+        // Keep Showcase mode active if toggled on by user
       })
     );
   }
@@ -36,7 +36,7 @@ export class AuthService {
         this.authState.setUser(res.user);
         this.authState.setOrg(res.org);
         this.applyBranding(res.org);
-        if (!res.user.isShowcaseAccount) this.showcaseService.disableShowcaseMode();
+        // Keep Showcase mode active if toggled on by user
       })
     );
   }
@@ -82,7 +82,7 @@ export class AuthService {
         this.authState.setUser(meData.user);
         this.authState.setOrg(brandData.org);
         this.applyBranding(brandData.org);
-        if (!meData.user.isShowcaseAccount) this.showcaseService.disableShowcaseMode();
+        // Keep Showcase mode active if toggled on by user
       })
       .catch((err) => {
         console.error('Auth Init failed:', err);
