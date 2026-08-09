@@ -39,8 +39,8 @@ To experience every feature of the EnergI platform, use the following pre-config
 
 ### 🏠 2. Consumer Account (Resident / Smart Meter User)
 * **Organization Slug**: `lpu-slug`
-* **Email**: `danish@gmail.com`
-* **Password**: `danish12345`
+* **Email**: `consumer@gmail.com`
+* **Password**: `consumer12345`
 * **Features**: Live Ticking Smart Meter Telemetry, Usage Trends & Slab Advisor, Early Bird Discount Alerts, Instant Stripe Payments, PDF Invoice Downloads.
 
 ---
@@ -84,7 +84,7 @@ Phase 12   → IoT Live Telemetry Hub & Showcase Demonstration Layer
 Real-time energy consumption telemetry with a "Digital Matrix" ticker and variable load monitoring for smart meters.
 
 ### ✨ Showcase Mode
-Integrated demonstration layer available on showcase accounts (`admin@gmail.com` / `danish@gmail.com`) that populates dashboards with rich presentation data.
+Integrated demonstration layer available on showcase accounts (`admin@gmail.com` / `consumer@gmail.com`) that populates dashboards with rich presentation data.
 
 ### ⚡ Early Bird Incentives
 Automated pricing logic granting discounts for users who settle bills prior to cutoff grace periods.
