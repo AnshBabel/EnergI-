@@ -6,6 +6,8 @@ import { env } from './config/env.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import fs from 'fs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -25,13 +27,18 @@ import { checkMaintenance } from './middleware/maintenance.js';
 
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Security headers (Allow Google Fonts & inline styles for production rendering)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 app.use('/uploads', express.static('uploads'));
 
-// Serve Frontend Static Files (Production)
-const distPath = path.join(__dirname, '../../frontend/dist/energi-frontend/browser');
+// Dynamically resolve Angular build output directory (supports browser/ subfolder or root dist)
+const distBrowserPath = path.join(__dirname, '../../frontend/dist/energi-frontend/browser');
+const distRootPath = path.join(__dirname, '../../frontend/dist/energi-frontend');
+const distPath = fs.existsSync(distBrowserPath) ? distBrowserPath : distRootPath;
 app.use(express.static(distPath));
 
 // CORS
@@ -68,11 +75,16 @@ app.get('/health', (_req, res) => {
 
 // Catch-all for Angular routes (must come after API routes)
 app.get('*', (req, res, next) => {
-  if (req.url.startsWith('/api')) return next();
-  res.sendFile(path.join(distPath, 'index.html'), (err) => {
-    if (err) {
-      // If index.html is missing (e.g. build not run), fall back to 404
-      res.status(404).json({ error: 'Frontend not found' });
+  if (req.url.startsWith('/api') || req.url.startsWith('/uploads')) return next();
+  
+  const indexPath = path.join(distPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return res.status(404).json({ error: 'Frontend build index.html not found' });
+  }
+  
+  res.sendFile(indexPath, (err) => {
+    if (err && !res.headersSent) {
+      res.status(500).json({ error: 'Failed to send index.html' });
     }
   });
 });
