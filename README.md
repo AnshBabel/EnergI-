@@ -41,10 +41,6 @@ To experience every feature of the EnergI platform, use the following pre-config
 * **Email**: `danish@gmail.com`
 * **Features**: Live Ticking Smart Meter Telemetry, Usage Trends & Slab Advisor, Early Bird Discount Alerts, Instant Stripe Payments, PDF Invoice Downloads.
 
-### 👑 3. Super Admin Master Account
-* **Email**: `ansh@gmail.com` | **Password**: `ansh12345`
-* **Shortcut**: On the login screen, press **`Ctrl + Shift + S`** (or `Cmd + Shift + S`) to unlock the **Super Admin Security HUD** for global platform metrics & cloud oversight.
-
 ---
 
 ## ⚡ Quick Start (Local Development)
@@ -102,7 +98,6 @@ Dynamic PDF bill generation containing society logos, digitally signed authorize
 ```http
 POST /api/v1/auth/register       → Register new organization + admin / consumer
 POST /api/v1/auth/login          → Login account (Rate limited: 5 req/15min)
-POST /api/v1/auth/superadmin/login → Super Admin authentication
 POST /api/v1/auth/refresh        → Refresh access token
 POST /api/v1/auth/logout         → Logout & clear httpOnly cookies
 GET  /api/v1/auth/me             → Get current authenticated user profile
@@ -139,3 +134,9 @@ GET  /api/v1/bills/:id/pdf        → Download legal PDF invoice
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for details.
+
+---
+
+<p align="center">
+  👨‍💻 Created with ❤️ by <b>Ansh Babel</b>
+</p>
