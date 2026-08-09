@@ -29,16 +29,18 @@
 
 ## 🔑 Showcase & Demo Accounts
 
-To experience every feature of the EnergI platform, use the following pre-configured showcase accounts:
+To experience every feature of the EnergI platform, use the following pre-configured showcase accounts & toggle it to showcase mode:
 
 ### 🛡️ 1. Society Admin Account (Utility Manager)
 * **Organization Slug**: `lpu-slug`
 * **Email**: `admin@gmail.com`
+* **Password**: `admin12345`
 * **Features**: Admin Command Center, IoT Live Hub, Batch Billing Cycles (`Cmd + Shift + B`), Tariff Slab Config, Dispute Resolution, Custom Branding (Logo & Signatures).
 
 ### 🏠 2. Consumer Account (Resident / Smart Meter User)
 * **Organization Slug**: `lpu-slug`
 * **Email**: `danish@gmail.com`
+* **Password**: `danish12345`
 * **Features**: Live Ticking Smart Meter Telemetry, Usage Trends & Slab Advisor, Early Bird Discount Alerts, Instant Stripe Payments, PDF Invoice Downloads.
 
 ---
