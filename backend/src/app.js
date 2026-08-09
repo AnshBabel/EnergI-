@@ -68,6 +68,12 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1/superadmin', superAdminRoutes);
 
+// Google Search Console Verification Endpoint
+app.get('/googleca46d16ff5497787.html', (_req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send('google-site-verification: googleca46d16ff5497787.html');
+});
+
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
