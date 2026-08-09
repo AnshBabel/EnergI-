@@ -140,5 +140,5 @@ Distributed under the MIT License. See `LICENSE` for details.
 ---
 
 <p align="center">
-  👨‍💻 Created with ❤️ by <b>Ansh Babel</b>
+  👨‍💻 Created by <b>Ansh Babel</b> ❤️
 </p>
