@@ -40,7 +40,7 @@ export const listByUser = async (req, res, next) => {
 
 export const getOne = async (req, res, next) => {
   try {
-    const bill = await billService.getBillById(req.user.organizationId, req.params.id);
+    const bill = await billService.getBillById(req.user.organizationId, req.params.id, req.user);
     res.json({ bill });
   } catch (err) { next(err); }
 };
@@ -66,7 +66,7 @@ export const downloadPdf = async (req, res, next) => {
       user = mock.users.find(u => u._id.toString() === (bill.userId._id || bill.userId).toString());
       org = await Organization.findById(req.user.organizationId); // Org info is usually real in demo
     } else {
-      bill = await billService.getBillById(req.user.organizationId, req.params.id);
+      bill = await billService.getBillById(req.user.organizationId, req.params.id, req.user);
       [user, org] = await Promise.all([
         userService.getConsumerById(req.user.organizationId, bill.userId._id || bill.userId),
         Organization.findById(req.user.organizationId),
