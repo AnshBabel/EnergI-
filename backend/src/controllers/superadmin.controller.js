@@ -12,6 +12,9 @@ import SystemConfig from '../models/SystemConfig.js';
 
 export const getOverview = async (req, res) => {
   try {
+    if (req.user?.isImpersonated) {
+      return res.status(403).json({ error: 'SuperAdmin platform metrics are strictly isolated from impersonated sessions' });
+    }
     const orgsCount = await Organization.countDocuments({ slug: { $ne: 'superadmin' } });
     const totalOrgs = await Organization.countDocuments();
     const consumersCount = await User.countDocuments({ role: 'CONSUMER' });
@@ -161,72 +164,19 @@ export const getMongoCollections = async (req, res) => {
 export const getCollectionDocuments = async (req, res) => {
   try {
     const { collectionName } = req.params;
+    const allowedCollections = ['organizations', 'users', 'bills', 'disputes', 'payments', 'tariffconfigs'];
+    if (!allowedCollections.includes(collectionName.toLowerCase())) {
+      return res.status(403).json({ error: 'Access to specified collection is forbidden' });
+    }
+
     if (!mongoose.connection.db) {
       return res.status(500).json({ error: 'Mongoose database connection not active' });
     }
     const collection = mongoose.connection.db.collection(collectionName);
-    const documents = await collection.find({}).limit(50).toArray();
+    const documents = await collection.find({}, { projection: { passwordHash: 0, refreshToken: 0 } }).limit(50).toArray();
     res.json({ collectionName, documents });
   } catch (err) {
     res.status(500).json({ error: `Failed to fetch documents for collection ${req.params.collectionName}` });
-  }
-};
-
-export const createDocument = async (req, res) => {
-  try {
-    const { collectionName } = req.params;
-    const documentData = req.body;
-    if (!mongoose.connection.db) {
-      return res.status(500).json({ error: 'Mongoose database connection not active' });
-    }
-    const collection = mongoose.connection.db.collection(collectionName);
-    const result = await collection.insertOne(documentData);
-    res.json({ message: 'Document created successfully', insertedId: result.insertedId });
-  } catch (err) {
-    res.status(500).json({ error: `Failed to create document in collection ${req.params.collectionName}` });
-  }
-};
-
-export const updateDocument = async (req, res) => {
-  try {
-    const { collectionName, id } = req.params;
-    const updateData = { ...req.body };
-    delete updateData._id; // Ensure _id is immutable
-    delete updateData.passwordHash; // Protect passwords from accidental corruption in JSON editor
-
-    // Auto-cast known ObjectIds to prevent breaking Mongoose lookups
-    if (updateData.organizationId && typeof updateData.organizationId === 'string') {
-      try { updateData.organizationId = new mongoose.Types.ObjectId(updateData.organizationId); } catch (e) {}
-    }
-
-    if (!mongoose.connection.db) {
-      return res.status(500).json({ error: 'Mongoose database connection not active' });
-    }
-    const collection = mongoose.connection.db.collection(collectionName);
-    let queryId;
-    try { queryId = new mongoose.Types.ObjectId(id); } catch { queryId = id; }
-
-    await collection.updateOne({ _id: queryId }, { $set: updateData });
-    res.json({ message: 'Document updated successfully' });
-  } catch (err) {
-    res.status(500).json({ error: `Failed to update document in collection ${req.params.collectionName}` });
-  }
-};
-
-export const deleteDocument = async (req, res) => {
-  try {
-    const { collectionName, id } = req.params;
-    if (!mongoose.connection.db) {
-      return res.status(500).json({ error: 'Mongoose database connection not active' });
-    }
-    const collection = mongoose.connection.db.collection(collectionName);
-    let queryId;
-    try { queryId = new mongoose.Types.ObjectId(id); } catch { queryId = id; }
-
-    await collection.deleteOne({ _id: queryId });
-    res.json({ message: 'Document deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: `Failed to delete document from collection ${req.params.collectionName}` });
   }
 };
 
@@ -273,15 +223,35 @@ export const toggleOrganizationStatus = async (req, res) => {
 
 export const impersonateUser = async (req, res) => {
   try {
+    if (req.user?.isImpersonated) {
+      return res.status(403).json({ error: 'Chained impersonation is strictly forbidden' });
+    }
+
     const { targetUserId } = req.body;
     const targetUser = await User.findById(targetUserId);
     if (!targetUser) return res.status(404).json({ error: 'Target user not found' });
+    if (!targetUser.isActive) return res.status(403).json({ error: 'Cannot impersonate an inactive user' });
+    if (targetUser.role === 'SUPER_ADMIN') return res.status(403).json({ error: 'SuperAdmin accounts cannot be impersonated' });
 
     const org = await Organization.findById(targetUser.organizationId);
-    const tokens = generateTokens(targetUser._id.toString(), targetUser.organizationId.toString(), targetUser.role);
+    if (!org || !org.isActive) return res.status(403).json({ error: 'Cannot impersonate user from an inactive organization' });
+
+    const { generateImpersonationToken } = await import('../utils/jwt.js');
+    const accessToken = generateImpersonationToken(
+      targetUser._id.toString(),
+      targetUser.organizationId.toString(),
+      targetUser.role,
+      req.user.userId
+    );
+
+    // Explicitly clear refresh cookie for impersonated sessions
+    res.clearCookie('refreshToken');
+
+    console.log(`[AUDIT IMPERSONATION START] SuperAdmin: ${req.user.userId} -> TargetUser: ${targetUser._id} (Org: ${org._id})`);
 
     res.json({
-      accessToken: tokens.accessToken,
+      accessToken,
+      isImpersonated: true,
       user: targetUser,
       org: org || null,
       message: `Impersonating session for ${targetUser.name} (${targetUser.role})`
