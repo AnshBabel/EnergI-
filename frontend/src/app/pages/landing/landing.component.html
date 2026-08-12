@@ -1,0 +1,557 @@
+<div class="landing-page" [class.modal-open]="showDemoModal">
+  <!-- Navbar -->
+  <nav class="landing-nav">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <svg class="energi-logo-svg" viewBox="0 0 40 40" fill="none" stroke="currentColor">
+          <circle cx="8" cy="10" r="2" fill="currentColor"/>
+          <circle cx="8" cy="30" r="2" fill="currentColor"/>
+          <path d="M30 10 H12 V30 H30" stroke-width="3.5" stroke-linecap="square"/>
+          <path d="M12 20 H22" stroke-width="3.5" stroke-linecap="square"/>
+          <path d="M4 24 L16 8 L22 22 L36 6" stroke="#10B981" stroke-width="2.5" class="logo-waveform" fill="none" stroke-linejoin="miter" stroke-linecap="square" />
+        </svg>
+        <span class="logo-text">EnergI</span>
+      </div>
+      <div class="nav-actions">
+        <a routerLink="/login" class="nav-login">Sign In</a>
+        <button (click)="openDemoModal()" class="btn btn-primary glow-btn">EXPLORE LIVE DEMO &rarr;</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero-section">
+    <div class="hero-bg-network">
+      <svg class="energi-grid-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        
+        <g class="grid-lines">
+          <!-- Lines with flowing energy pulses via stroke-dasharray -->
+          <path class="flow-line active-flow" d="M100,250 L300,250 L400,150 L600,150 L800,250" />
+          <path class="flow-line active-flow-alt" d="M100,250 L300,350 L500,350 L700,250 L800,250" />
+          <line x1="300" y1="250" x2="300" y2="350" class="flow-line" />
+          <line x1="400" y1="150" x2="500" y2="50" class="flow-line active-flow" />
+          <!-- The anomaly connection line -->
+          <line x1="600" y1="150" x2="700" y2="250" class="flow-line anomaly-connection" [class.trigger-anomaly]="heroAnomalyActive" />
+          <line x1="700" y1="250" x2="800" y2="250" class="flow-line anomaly-connection" [class.trigger-anomaly]="heroAnomalyActive" />
+          
+          <line x1="700" y1="250" x2="800" y2="100" class="flow-line" />
+          <line x1="100" y1="100" x2="400" y2="150" class="flow-line" />
+        </g>
+
+        <g class="grid-nodes">
+          <circle cx="100" cy="250" r="4" class="node health-green breathing"/>
+          <circle cx="300" cy="250" r="6" class="node health-green breathing" filter="url(#glow)"/>
+          <circle cx="300" cy="350" r="4" class="node health-green breathing" />
+          <circle cx="400" cy="150" r="8" class="node core-node breathing-fast" filter="url(#glow)"/>
+          <circle cx="500" cy="50" r="4" class="node health-green breathing" />
+          <circle cx="500" cy="350" r="5" class="node health-green breathing" />
+          <circle cx="600" cy="150" r="4" class="node health-green breathing" />
+          
+          <!-- Anomaly Node -->
+          <circle cx="700" cy="250" r="6" class="node health-green breathing anomaly-node" [class.trigger-anomaly]="heroAnomalyActive" filter="url(#glow)"/>
+          
+          <circle cx="800" cy="250" r="5" class="node health-green breathing" />
+          <circle cx="800" cy="100" r="4" class="node health-green breathing" />
+          <circle cx="100" cy="100" r="5" class="node health-green breathing" />
+        </g>
+
+        <!-- AI Event Panel (Angular Controlled) -->
+        <g class="ai-event-pop" [class.visible]="heroAnomalyActive">
+          <rect x="620" y="160" width="160" height="60" rx="4" class="ai-event-box" />
+          <text x="630" y="180" class="ai-event-title">AI DETECTION</text>
+          <text x="630" y="196" class="ai-event-sub">Meter E-204</text>
+          <text x="630" y="208" class="ai-event-desc">Consumption anomaly</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hero-content">
+      <h1 class="hero-title">
+        ENERGY,<br/>
+        INTELLIGENTLY<br/>
+        CONNECTED.
+      </h1>
+      <p class="hero-subtitle">
+        Billing. Smart meters. Grid intelligence. AI &mdash; unified in one platform.
+      </p>
+      <div class="hero-actions">
+        <a routerLink="/login" class="btn btn-lg btn-primary glow-btn">ENTER ENERGI &rarr;</a>
+        <button (click)="openDemoModal()" class="btn btn-lg btn-secondary">EXPLORE LIVE DEMO &rarr;</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Command Center 3D Preview (Enlarged) -->
+  <section class="section cc-section">
+    <div class="section-container cc-container">
+      <div class="cc-perspective">
+        <div class="cc-window">
+          <div class="cc-header">
+            <div class="cc-header-left">
+              <span class="live-dot breathing"></span>
+              <span class="sys-live">SYSTEM LIVE</span>
+            </div>
+            <div class="cc-title">ENERGI OPERATING SYSTEM</div>
+            <div class="cc-header-right">
+              LAST SYNC <span class="sync-time">{{ lastSync }}</span>
+            </div>
+          </div>
+          
+          <div class="cc-body">
+            <div class="cc-main os-grid">
+              
+              <!-- TOP ROW -->
+              <div class="os-top-row">
+                <div class="os-panel os-metrics">
+                  <div class="os-panel-title">LIVE METRICS</div>
+                  <div class="os-metric-item">
+                    <span class="os-m-lbl">LIVE LOAD</span>
+                    <span class="os-m-val text-green">{{ liveLoad | number:'1.1-1' }} MW</span>
+                  </div>
+                  <div class="os-metric-item">
+                    <span class="os-m-lbl">ACTIVE METERS</span>
+                    <span class="os-m-val text-cyan">{{ activeMeters | number }}</span>
+                  </div>
+                  <div class="os-metric-item">
+                    <span class="os-m-lbl">GRID HEALTH</span>
+                    <span class="os-m-val text-yellow">98.7%</span>
+                  </div>
+                  <div class="os-metric-item">
+                    <span class="os-m-lbl">ACTIVE ALERTS</span>
+                    <span class="os-m-val text-red">03</span>
+                  </div>
+                </div>
+                
+                <div class="os-panel os-network">
+                  <div class="os-panel-title">LIVE GRID NETWORK</div>
+                  <div class="os-network-view">
+                    <svg viewBox="0 0 140 85" class="cc-map-svg">
+                      <!-- Connection Lines -->
+                      <path d="M25,40 L70,18 L115,40 M70,18 L70,62 M25,40 L70,62 M115,40 L70,62" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                      
+                      <!-- Nodes -->
+                      <!-- Smart Meters -->
+                      <circle cx="25" cy="40" r="4" fill="#10B981" class="breathing"/>
+                      <text x="25" y="28" font-size="4" fill="#A1A1AA" text-anchor="middle" font-weight="bold">SMART METERS</text>
+                      
+                      <!-- Grid Nodes -->
+                      <circle cx="70" cy="18" r="5" fill="#10B981"/>
+                      <text x="70" y="9" font-size="4" fill="#10B981" text-anchor="middle" font-weight="bold">GRID NODE</text>
+                      
+                      <!-- Consumers -->
+                      <circle cx="115" cy="40" r="4" fill="#06B6D4"/>
+                      <text x="115" y="28" font-size="4" fill="#A1A1AA" text-anchor="middle" font-weight="bold">CONSUMERS</text>
+                      
+                      <!-- Substation -->
+                      <circle cx="70" cy="62" r="5" fill="#F59E0B" class="breathing-fast"/>
+                      <text x="70" y="74" font-size="4" fill="#F59E0B" text-anchor="middle" font-weight="bold">SUBSTATION (LOAD: 98%)</text>
+                      
+                      <!-- Animated Data Packets -->
+                      <circle cx="25" cy="40" r="2" fill="#06B6D4">
+                        <animate attributeName="cx" values="25;70;115;70;25" dur="8s" repeatCount="indefinite"/>
+                        <animate attributeName="cy" values="40;18;40;62;40" dur="8s" repeatCount="indefinite"/>
+                      </circle>
+                      <circle cx="115" cy="40" r="2" fill="#10B981">
+                        <animate attributeName="cx" values="115;70;25;70;115" dur="10s" repeatCount="indefinite"/>
+                        <animate attributeName="cy" values="40;62;40;18;40" dur="10s" repeatCount="indefinite"/>
+                      </circle>
+                    </svg>
+                  </div>
+                </div>
+                
+                <div class="os-panel os-ai">
+                  <div class="os-panel-title">AI COPILOT</div>
+                  <div class="ai-sequence">
+                    <div class="ai-step" [class.active]="aiCopilotState >= 0">
+                      <span class="ai-dot"></span> <span class="ai-text">MONITORING GRID...</span>
+                    </div>
+                    <div class="ai-step" [class.active]="aiCopilotState >= 1">
+                      <span class="ai-dot"></span> <span class="ai-text">ANALYZING LOAD PATTERNS...</span>
+                    </div>
+                    <div class="ai-step" [class.active]="aiCopilotState >= 2">
+                      <span class="ai-dot"></span> <span class="ai-text">INSIGHT FOUND<br><span class="ai-sub">Consumption at M-204 is 18% above baseline.</span></span>
+                    </div>
+                    <div class="ai-step" [class.active]="aiCopilotState >= 3">
+                      <span class="ai-dot"></span> <span class="ai-text">RECOMMENDATION<br><span class="ai-sub">Shift load between 18:00–20:00.</span></span>
+                    </div>
+                    <div class="ai-step" [class.active]="aiCopilotState >= 4">
+                      <span class="ai-dot text-green"></span> <span class="ai-text text-green">OPTIMAL</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- MIDDLE ROW -->
+              <div class="os-mid-row">
+                <div class="os-panel os-telemetry">
+                  <div class="os-panel-title">ENERGY TELEMETRY</div>
+                  <div class="cc-chart-wrapper">
+                    <svg viewBox="0 0 200 50" preserveAspectRatio="none" class="cc-real-chart">
+                      <!-- Grid lines -->
+                      <line x1="0" y1="12" x2="200" y2="12" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
+                      <line x1="0" y1="25" x2="200" y2="25" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
+                      <line x1="0" y1="38" x2="200" y2="38" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
+                      
+                      <!-- Historical Area -->
+                      <path d="M0,50 L0,30 L30,25 L60,35 L90,20 L120,25 L150,15 L150,50 Z" fill="rgba(16,185,129,0.15)"/>
+                      <!-- Forecast Area -->
+                      <path d="M150,50 L150,15 L170,10 L200,20 L200,50 Z" fill="rgba(245,158,11,0.08)"/>
+                      
+                      <!-- Historical Line -->
+                      <path d="M0,30 L30,25 L60,35 L90,20 L120,25 L150,15" stroke="#10B981" stroke-width="2" fill="none" class="animated-chart-line"/>
+                      <!-- Forecast Line (Dashed) -->
+                      <path d="M150,15 L170,10 L200,20" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="2 2" fill="none"/>
+                      
+                      <!-- Current Time Marker -->
+                      <line x1="150" y1="0" x2="150" y2="50" stroke="#06B6D4" stroke-width="1" stroke-dasharray="1 1"/>
+                      <circle cx="150" cy="15" r="3" fill="#06B6D4">
+                         <animate attributeName="r" values="3;4;3" dur="2s" repeatCount="indefinite"/>
+                      </circle>
+                      <text x="145" y="8" font-size="6" fill="#06B6D4" font-weight="bold">NOW</text>
+                      
+                      <!-- Peak Marker -->
+                      <circle cx="170" cy="10" r="2" fill="#F59E0B"/>
+                      <text x="173" y="10" font-size="5" fill="#F59E0B">PEAK EXPECTED</text>
+                    </svg>
+                    <div class="cc-chart-labels">
+                      <span>PAST (00:00 - 12:00)</span>
+                      <span class="text-yellow">FORECAST (12:00 - 24:00)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- BOTTOM ROW -->
+              <div class="os-bot-row">
+                <div class="os-panel os-activity">
+                  <div class="os-panel-title">LIVE ACTIVITY</div>
+                  <div class="os-activity-feed">
+                    <div class="feed-item" *ngFor="let act of liveActivity; let i = index" [style.opacity]="1 - (i * 0.2)">
+                      <span class="feed-time">{{ act.time }}</span>
+                      <span class="feed-msg">{{ act.msg }}</span>
+                      <span class="feed-sep" *ngIf="i < liveActivity.length - 1">&bull;</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Continuous Story -->
+  <section class="section scroll-story">
+    <div class="story-line"></div>
+    <div class="section-container story-container">
+      
+      <div class="story-step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <h2>CONNECT</h2>
+          <p class="story-desc">Smart meters connect securely to the EnergI IoT hub, establishing the foundation of the digital twin.</p>
+        </div>
+        <div class="step-visual">
+          <div class="network-vis">
+            <svg viewBox="0 0 100 60" class="mini-svg">
+              <path d="M10,30 L50,30 L90,30 M50,10 L50,50" stroke="rgba(16,185,129,0.3)" stroke-width="2"/>
+              <circle cx="10" cy="30" r="4" fill="#10B981" class="breathing"/>
+              <circle cx="50" cy="30" r="6" fill="#10B981" class="breathing"/>
+              <circle cx="90" cy="30" r="4" fill="#10B981" class="breathing"/>
+              <circle cx="50" cy="10" r="4" fill="#10B981" class="breathing"/>
+              <circle cx="50" cy="50" r="4" fill="#10B981" class="breathing"/>
+            </svg>
+            <div class="nv-badge">CONNECTED: 2,481 ENDPOINTS</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <h2>UNDERSTAND</h2>
+          <p class="story-desc">Telemetry becomes intelligence. High-resolution consumption data flows into the EnergI Core for real-time aggregation.</p>
+        </div>
+        <div class="step-visual">
+          <div class="telemetry-vis">
+            <div class="tv-stream"><span>23.4 kW</span> <div class="stream-line"><div class="packet"></div></div></div>
+            <div class="tv-stream"><span>18.2 kW</span> <div class="stream-line"><div class="packet fast"></div></div></div>
+            <div class="tv-stream"><span>31.8 kW</span> <div class="stream-line"><div class="packet slow"></div></div></div>
+            <div class="tv-core">ENERGI CORE</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <h2>AUTOMATE</h2>
+          <p class="story-desc">Consumption directly drives the billing engine. Complex tariffs and slab calculations happen instantly.</p>
+        </div>
+        <div class="step-visual">
+          <div class="billing-transformation">
+            <div class="bt-step">ENERGY DATA</div>
+            <div class="bt-arrow">&darr;</div>
+            <div class="bt-step bt-glow">TARIFF ENGINE</div>
+            <div class="bt-arrow">&darr;</div>
+            <div class="bt-step bt-result">₹2,450 CURRENT BILL</div>
+            <div class="bt-arrow">&darr;</div>
+            <div class="bt-step bt-stripe">STRIPE PAYMENT</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETECT SECTION WITH INTERSECTION OBSERVER -->
+      <div class="story-step" #detectSection>
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <h2>DETECT</h2>
+          <p class="story-desc">Our AI scans the entire grid 24/7, identifying consumption anomalies, leakages, and usage irregularities.</p>
+        </div>
+        <div class="step-visual">
+          <div class="ai-detect-box" [class.active]="detectSectionActive">
+            <div class="scanner-line"></div>
+            <svg viewBox="0 0 100 40" class="mini-svg detect-grid">
+              <path d="M10,20 L90,20" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+              <circle cx="10" cy="20" r="4" fill="#10B981" />
+              <circle cx="50" cy="20" r="6" class="detect-node" />
+              <circle cx="90" cy="20" r="4" fill="#10B981" />
+            </svg>
+            <div class="detect-msg">ANOMALY DETECTED</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <div class="step-num">05</div>
+        <div class="step-content">
+          <h2>ACT</h2>
+          <p class="story-desc">Administrators and consumers receive actionable insights. Grid stability is restored proactively.</p>
+        </div>
+        <div class="step-visual">
+          <div class="action-flow">
+            <div class="af-box text-red">ANOMALY</div>
+            <div class="af-arr">&darr;</div>
+            <div class="af-box text-cyan">AI ANALYSIS</div>
+            <div class="af-arr">&darr;</div>
+            <div class="af-box">ADMIN ACTION</div>
+            <div class="af-arr">&darr;</div>
+            <div class="af-box bg-green text-green">&check; RESOLVED</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- AI Core System Section -->
+  <section class="section ai-section">
+    <div class="section-container">
+      <div class="ai-header">
+        <h2 class="huge-headline">YOUR GRID HAS A STORY.<br>ENERGI AI CAN READ IT.</h2>
+      </div>
+      <div class="ai-copilot-container floating-panel">
+        <div class="ai-chat">
+          <div class="msg user-msg">Why did consumption increase this month?</div>
+          <div class="msg ai-msg">
+            Consumption increased compared with the previous period. Several meters show higher peak-hour activity.
+          </div>
+        </div>
+        
+        <div class="ai-analysis-state">
+          <div class="aa-header">
+            <span>ANALYZING GRID...</span>
+            <span class="aa-percentage">100%</span>
+          </div>
+          <div class="aa-progress-bar"><div class="aa-fill"></div></div>
+          <div class="ai-analysis-list">
+            <div class="al-item"><span class="check text-green">&check;</span> Consumption patterns</div>
+            <div class="al-item"><span class="check text-green">&check;</span> Peak-hour behavior</div>
+            <div class="al-item"><span class="arr text-yellow">&rarr;</span> Meter anomalies</div>
+            <div class="al-item"><span class="arr text-yellow">&rarr;</span> Usage irregularities</div>
+          </div>
+        </div>
+        
+        <div class="ai-summary">
+          12,480 meters analyzed &rarr; <span class="text-red">3 anomalies detected</span> &rarr; <span class="text-yellow">2 require attention</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Role Experiences -->
+  <section class="section roles-section">
+    <div class="section-container">
+      <div class="role-grid">
+        <div class="role-window">
+          <div class="rw-header">
+            <div class="rw-dots"><span></span><span></span><span></span></div>
+            <span>CONSUMER PORTAL</span>
+          </div>
+          <div class="rw-body">
+            <div class="rw-title">Understand your energy.</div>
+            <div class="rw-preview">
+              <div class="rwp-card">
+                <span class="rwp-lbl">CURRENT BILL</span>
+                <span class="rwp-val">₹2,450</span>
+                <div class="rwp-chart consumer-chart"></div>
+              </div>
+              <div class="rwp-card bg-green">
+                <span class="rwp-val text-green text-sm">&check; PAID VIA STRIPE</span>
+              </div>
+              <div class="rwp-card ai-insight-card">
+                <span class="rwp-lbl text-cyan">AI INSIGHT</span>
+                <span class="text-xs">Your usage is 12% lower than similar households.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="role-window">
+          <div class="rw-header">
+            <div class="rw-dots"><span></span><span></span><span></span></div>
+            <span>UTILITY ADMIN</span>
+          </div>
+          <div class="rw-body">
+            <div class="rw-title">Operate your utility.</div>
+            <div class="rw-preview">
+              <div class="rwp-grid-2">
+                <div class="rwp-card">
+                  <span class="rwp-lbl">HEALTH</span>
+                  <span class="rwp-val text-green text-md">OPTIMAL</span>
+                </div>
+                <div class="rwp-card">
+                  <span class="rwp-lbl">METERS</span>
+                  <span class="rwp-val text-cyan text-md">2,481</span>
+                </div>
+              </div>
+              <div class="rwp-card bg-yellow">
+                <span class="rwp-val text-yellow text-sm">! 1 UNRESOLVED DISPUTE</span>
+              </div>
+              <div class="rwp-card bg-red">
+                <span class="rwp-val text-red text-sm">ANOMALY: METER E-204</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="role-window">
+          <div class="rw-header">
+            <div class="rw-dots"><span></span><span></span><span></span></div>
+            <span>SUPER ADMIN</span>
+          </div>
+          <div class="rw-body">
+            <div class="rw-title">Control the platform.</div>
+            <div class="rw-preview">
+              <div class="rwp-card">
+                <span class="rwp-lbl">ORGANIZATIONS</span>
+                <span class="rwp-val text-cyan">24 TENANTS</span>
+              </div>
+              <div class="rwp-card">
+                <span class="rwp-lbl">PLATFORM REVENUE</span>
+                <span class="rwp-val">₹4,2M</span>
+              </div>
+              <div class="rwp-card bg-green">
+                <span class="rwp-val text-green text-sm">SYSTEM: ALL SYSTEMS GO</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer / Final CTA -->
+  <footer class="landing-footer">
+    <svg class="footer-grid-svg" viewBox="0 0 1000 200" preserveAspectRatio="xMidYMid slice">
+      <path d="M0,100 L200,50 L400,150 L600,100 L800,150 L1000,50" class="flow-line" />
+      <circle cx="200" cy="50" r="4" class="node health-green breathing"/>
+      <circle cx="400" cy="150" r="4" class="node health-cyan breathing"/>
+      <circle cx="600" cy="100" r="6" class="node health-green breathing"/>
+      <circle cx="800" cy="150" r="4" class="node health-green breathing"/>
+    </svg>
+    <div class="footer-cta">
+      <h2 class="huge-headline">READY TO EXPERIENCE ENERGI?</h2>
+      <div class="footer-actions">
+        <button (click)="openDemoModal()" class="btn btn-lg btn-primary glow-btn">EXPLORE LIVE DEMO &rarr;</button>
+        <a routerLink="/login" class="btn btn-lg btn-secondary">SIGN IN</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="fb-brand">
+        <svg class="energi-logo-svg small-logo" viewBox="0 0 40 40" fill="none" stroke="currentColor">
+          <circle cx="8" cy="10" r="2" fill="currentColor"/>
+          <circle cx="8" cy="30" r="2" fill="currentColor"/>
+          <path d="M30 10 H12 V30 H30" stroke-width="3.5" stroke-linecap="square"/>
+          <path d="M12 20 H22" stroke-width="3.5" stroke-linecap="square"/>
+          <path d="M4 24 L16 8 L22 22 L36 6" stroke="#10B981" stroke-width="2.5" class="logo-waveform" fill="none" stroke-linejoin="miter" stroke-linecap="square" />
+        </svg>
+        <span class="logo-text">EnergI</span>
+      </div>
+      <div class="fb-copy">&copy; 2026 EnergI Systems. All rights reserved. Representative demo data used for visual demonstration.</div>
+      <div class="fb-links">
+        <a routerLink="/login">Sign In</a>
+        <a routerLink="/register">Register</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Demo Role Selector Modal -->
+  <div class="demo-modal-overlay" *ngIf="showDemoModal" (click)="closeDemoModal()">
+    <div class="demo-modal-container" (click)="$event.stopPropagation()">
+      <button class="close-modal" (click)="closeDemoModal()">&times;</button>
+      
+      <div class="modal-header">
+        <h2>EXPLORE THE ENERGI DIGITAL TWIN</h2>
+        <p>Choose how you want to experience EnergI.</p>
+        <div class="showcase-indicator">✦ SHOWCASE — DEMO DATA</div>
+      </div>
+
+      <div class="demo-options">
+        <div class="demo-card">
+          <div class="dc-header text-green">CONSUMER</div>
+          <h3>Understand your energy.</h3>
+          <p>Usage &bull; Bills &bull; Payments &bull; Insights</p>
+          <div class="demo-mini-ui">
+            <div class="dm-row">CURRENT BILL <span class="text-green">₹2,450</span></div>
+            <div class="dm-row dm-chart"></div>
+            <div class="dm-row text-green text-xs">&check; PAID</div>
+          </div>
+          <button (click)="loginConsumerDemo()" [disabled]="demoLoading" class="btn btn-demo demo-consumer">
+            ENTER CONSUMER DEMO &rarr;
+          </button>
+        </div>
+
+        <div class="demo-card">
+          <div class="dc-header text-cyan">UTILITY OPERATOR</div>
+          <h3>Operate your utility.</h3>
+          <p>Grid &bull; Smart Meters &bull; Billing &bull; AI</p>
+          <div class="demo-mini-ui">
+            <div class="dm-row">GRID HEALTH <span class="text-green">● OPTIMAL</span></div>
+            <div class="dm-row">4,208 METERS</div>
+            <div class="dm-row text-red">2 ALERTS</div>
+          </div>
+          <button (click)="loginAdminDemo()" [disabled]="demoLoading" class="btn btn-demo demo-admin">
+            ENTER OPERATOR DEMO &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+      
+      <div class="demo-loading-overlay" *ngIf="demoLoading">
+        <div class="spinner"></div>
+        <span>Activating Showcase Environment...</span>
+      </div>
+  </div>
+</div>
