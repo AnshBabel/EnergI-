@@ -55,11 +55,11 @@ export class BillService {
     return this.http.get<any[]>(`${this.base}/my-history`, { params: this.getParams() });
   }
 
-  pdfUrl(id: string): string {
-    const token = localStorage.getItem('accessToken');
-    let url = `/api/v1/bills/${id}/pdf?token=${token}`;
-    if (this.showcaseService.isShowcaseActive) url += '&demo=true';
-    return url;
+  downloadPdf(id: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${id}/pdf`, {
+      params: this.getParams(),
+      responseType: 'blob'
+    });
   }
 
   exportCsv(): Observable<Blob> {
