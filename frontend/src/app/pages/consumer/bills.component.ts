@@ -85,6 +85,20 @@ export class BillsComponent implements OnInit, OnDestroy {
     return `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   }
 
+  handleDownloadPdf(billId: string): void {
+    this.billService.downloadPdf(billId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Invoice-${billId}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => alert(err.error?.error || 'Failed to download PDF invoice')
+    });
+  }
+
   ngOnDestroy(): void {
     this.sub.unsubscribe();
   }
