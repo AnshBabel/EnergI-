@@ -6,9 +6,6 @@ export const authenticate = (req, res, next) => {
 
   if (authHeader?.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1];
-  } else if (req.query.token && req.method === 'GET') {
-    // Allow token in query string for GET requests (e.g. PDFs in new tab)
-    token = req.query.token;
   }
 
   if (!token) {
@@ -20,17 +17,28 @@ export const authenticate = (req, res, next) => {
       userId: payload.userId,
       organizationId: payload.organizationId,
       role: payload.role,
+      isImpersonated: !!payload.isImpersonated,
+      impersonatorId: payload.impersonatorId || null,
     };
 
-    // Track activity in background (Import User model dynamically to avoid circular dependencies if any)
-    import('../models/User.js').then(m => {
-      m.default.findByIdAndUpdate(payload.userId, { lastActiveAt: new Date() }).exec().catch(() => {});
-    });
+    // Track activity in background
+    if (process.env.NODE_ENV !== 'test') {
+      import('../models/User.js').then(m => {
+        m.default.findByIdAndUpdate(payload.userId, { lastActiveAt: new Date() }).exec().catch(() => {});
+      }).catch(() => {});
+    }
 
     next();
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
+};
+
+export const blockImpersonatedHighRiskOps = (req, res, next) => {
+  if (req.user?.isImpersonated) {
+    return res.status(403).json({ error: 'High-risk operation denied for impersonated session' });
+  }
+  next();
 };
 
 export const requireAdmin = (req, res, next) => {

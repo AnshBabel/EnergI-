@@ -25,32 +25,60 @@ import superAdminRoutes from './routes/superadmin.routes.js';
 
 import { checkMaintenance } from './middleware/maintenance.js';
 
+import mongoSanitize from 'express-mongo-sanitize';
+
 const app = express();
 
-// Security headers (Allow Google Fonts & inline styles for production rendering)
+// Security headers (Tailored for Angular 18, Google Fonts, and Stripe)
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "https://api.stripe.com", "https://generativelanguage.googleapis.com"],
+      frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 app.use('/uploads', express.static('uploads'));
 
-// Dynamically resolve Angular build output directory (supports browser/ subfolder or root dist)
+// Dynamically resolve Angular build output directory
 const distBrowserPath = path.join(__dirname, '../../frontend/dist/energi-frontend/browser');
 const distRootPath = path.join(__dirname, '../../frontend/dist/energi-frontend');
 const distPath = fs.existsSync(distBrowserPath) ? distBrowserPath : distRootPath;
 app.use(express.static(distPath));
 
-// CORS
+// CORS Configuration with strict origin check
+const allowedOrigins = [env.FRONTEND_URL, 'http://localhost:4200', 'http://localhost:5000'].filter(Boolean);
 app.use(cors({
-  origin: env.FRONTEND_URL,
-  credentials: true, // allow cookies
+  origin: (origin, callback) => {
+    // Allow non-browser requests (like mobile apps, curl, server-to-server) or matched origin
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy: Access denied for this origin.'));
+    }
+  },
+  credentials: true,
 }));
 
 // Raw body for Stripe webhook (must come before express.json())
-app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
-// Body parsing
-app.use(express.json());
+app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json', limit: '100kb' }));
+
+// Body parsing with strict size limits
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
+
+// Express Mongo Sanitize (Strips $ and . from user inputs to prevent NoSQL injection)
+app.use(mongoSanitize());
+
 app.use(cookieParser());
 
 // Maintenance Check (Global for API)

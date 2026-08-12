@@ -3,6 +3,7 @@ import { LoginComponent } from './pages/login.component';
 import { RegisterComponent } from './pages/register.component';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
+import { LandingComponent } from './pages/landing/landing.component';
 
 // Admin Pages
 import { DashboardComponent as AdminDashboard } from './pages/admin/dashboard.component';
@@ -29,7 +30,7 @@ import { MaintenanceComponent } from './pages/maintenance.component';
 
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '', component: LandingComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'maintenance', component: MaintenanceComponent },

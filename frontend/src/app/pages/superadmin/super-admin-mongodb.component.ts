@@ -60,10 +60,6 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
                   <span class="pill">Indexes: <strong>{{ selectedCollection.indexes }}</strong> ({{ selectedCollection.indexSize }})</span>
                 </div>
               </div>
-
-              <button class="btn btn-primary btn-create" (click)="openCreateModal()">
-                ➕ New Document
-              </button>
             </div>
 
             <!-- Documents Table / Grid -->
@@ -72,8 +68,7 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
                 <thead>
                   <tr>
                     <th style="width: 25%;">Document _id</th>
-                    <th style="width: 55%;">JSON Snapshot</th>
-                    <th style="width: 20%; text-align: right;">Cloud Operations</th>
+                    <th style="width: 75%;">JSON Snapshot</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -82,15 +77,9 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
                     <td>
                       <pre class="json-preview">{{ getDocSummary(doc) }}</pre>
                     </td>
-                    <td style="text-align: right;">
-                      <div class="doc-actions-flex">
-                        <button class="btn btn-sm btn-edit" (click)="openEditModal(doc)">✏️ Edit</button>
-                        <button class="btn btn-sm btn-delete" (click)="deleteDocument(doc._id)">🗑️ Delete</button>
-                      </div>
-                    </td>
                   </tr>
                   <tr *ngIf="documents.length === 0">
-                    <td colspan="3" class="empty-state-row">No documents found in collection '{{ selectedCollection.name }}'.</td>
+                    <td colspan="2" class="empty-state-row">No documents found in collection '{{ selectedCollection.name }}'.</td>
                   </tr>
                 </tbody>
               </table>
@@ -101,35 +90,9 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
             <div class="empty-state-workspace">
               <div class="empty-icon">🗄️</div>
               <h3>Select a MongoDB Collection</h3>
-              <p>Choose a collection from the sidebar to inspect and control live database documents.</p>
+              <p>Choose a collection from the sidebar to inspect database document counts and structure.</p>
             </div>
           </ng-template>
-        </div>
-      </div>
-
-      <!-- JSON Document Editor / Creator Modal -->
-      <div *ngIf="editorModalOpen" class="modal-overlay animate-in">
-        <div class="editor-modal-box">
-          <div class="modal-header-flex mb-4">
-            <h3 class="editor-title">{{ isEditing ? '✏️ Edit Document' : '➕ Create New Document' }} (<code>{{ selectedCollection?.name }}</code>)</h3>
-            <button class="close-btn" (click)="editorModalOpen = false">×</button>
-          </div>
-          <p class="text-xs text-muted mb-4">Edit the raw JSON structure below. Changes will be instantly synchronized with your MongoDB Atlas Cloud instance.</p>
-
-          <div *ngIf="modalError" class="alert alert-error">{{ modalError }}</div>
-
-          <textarea 
-            class="form-input json-editor-textarea" 
-            [(ngModel)]="rawJsonInput" 
-            rows="14"
-            spellcheck="false"
-            placeholder="{ ... }">
-          </textarea>
-
-          <div class="modal-buttons-grid mt-4">
-            <button class="btn btn-secondary cancel-btn" (click)="editorModalOpen = false">Cancel</button>
-            <button class="btn btn-primary save-btn" (click)="saveDocument()">💾 Synchronize to Atlas</button>
-          </div>
         </div>
       </div>
     </app-app-layout>
@@ -179,32 +142,14 @@ import { AppLayoutComponent } from '../../components/layout/app-layout/app-layou
     .col-stats-pills { display: flex; gap: 12px; flex-wrap: wrap; }
     .pill { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 8px; font-size: 12px; color: var(--color-text-muted); }
     .pill strong { color: white; font-weight: 700; }
-    .btn-create { background: linear-gradient(135deg, #10b981, #059669); border: none; padding: 0 24px; border-radius: 12px; font-weight: 700; }
 
-    /* Table & Actions */
+    /* Table */
     .premium-table-wrapper { border-radius: 16px; overflow: hidden; border: 1px solid var(--color-border); background: rgba(0,0,0,0.3); }
     .doc-id-tag { background: rgba(124, 58, 237, 0.15); color: #c084fc; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
     .json-preview { font-size: 12px; color: #cbd5e1; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; max-height: 80px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; margin: 0; }
-    .doc-actions-flex { display: flex; gap: 8px; justify-content: flex-end; }
-    .btn-edit { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .btn-edit:hover { background: #3b82f6; color: white; }
-    .btn-delete { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .btn-delete:hover { background: #ef4444; color: white; }
     .empty-state-row { text-align: center; padding: 48px 0; color: var(--color-text-muted); font-size: 14px; }
     .empty-state-workspace { text-align: center; padding: 80px 32px; color: var(--color-text-muted); }
     .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-
-    /* Modal Editor */
-    .editor-modal-box { width: 100%; max-width: 650px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 24px; padding: 36px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); }
-    .modal-header-flex { display: flex; align-items: center; justify-content: space-between; }
-    .editor-title { font-size: 20px; font-weight: 700; color: white; margin: 0; }
-    .close-btn { background: none; border: none; color: var(--color-text-muted); font-size: 28px; cursor: pointer; }
-    .close-btn:hover { color: white; }
-    .json-editor-textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 16px; font-family: monospace; font-size: 13px; color: #34d399; outline: none; transition: border-color 0.2s; }
-    .json-editor-textarea:focus { border-color: #10b981; }
-    .modal-buttons-grid { display: flex; gap: 16px; }
-    .cancel-btn { flex: 1; padding: 14px; border-radius: 14px; font-weight: 600; }
-    .save-btn { flex: 1; padding: 14px; border-radius: 14px; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; }
   `]
 })
 export class SuperAdminMongodbComponent implements OnInit {
@@ -213,13 +158,6 @@ export class SuperAdminMongodbComponent implements OnInit {
   documents: any[] = [];
   error = '';
   success = '';
-
-  // Editor Modal State
-  editorModalOpen = false;
-  isEditing = false;
-  editingDocId: string | null = null;
-  rawJsonInput = '';
-  modalError = '';
 
   constructor(private superAdminService: SuperAdminService) {}
 
@@ -252,75 +190,5 @@ export class SuperAdminMongodbComponent implements OnInit {
     const clone = { ...doc };
     delete clone._id;
     return JSON.stringify(clone, null, 2);
-  }
-
-  openCreateModal(): void {
-    if (!this.selectedCollection) return;
-    this.isEditing = false;
-    this.editingDocId = null;
-    this.modalError = '';
-    this.rawJsonInput = '{\n  "name": "Example Field",\n  "status": "ACTIVE"\n}';
-    this.editorModalOpen = true;
-  }
-
-  openEditModal(doc: any): void {
-    if (!this.selectedCollection) return;
-    this.isEditing = true;
-    this.editingDocId = doc._id;
-    this.modalError = '';
-    const clone = { ...doc };
-    delete clone._id;
-    this.rawJsonInput = JSON.stringify(clone, null, 2);
-    this.editorModalOpen = true;
-  }
-
-  saveDocument(): void {
-    if (!this.selectedCollection) return;
-    this.modalError = '';
-    let parsedObj;
-    try {
-      parsedObj = JSON.parse(this.rawJsonInput);
-    } catch (e: any) {
-      this.modalError = `Invalid JSON syntax: ${e.message}`;
-      return;
-    }
-
-    const colName = this.selectedCollection.name;
-    if (this.isEditing && this.editingDocId) {
-      this.superAdminService.updateDocument(colName, this.editingDocId, parsedObj).subscribe({
-        next: (res) => {
-          this.success = `💾 Document '${this.editingDocId}' synchronized in Atlas successfully.`;
-          this.editorModalOpen = false;
-          this.selectCollection(this.selectedCollection);
-          setTimeout(() => this.success = '', 5000);
-        },
-        error: () => this.modalError = 'Failed to push update to MongoDB Atlas cluster.'
-      });
-    } else {
-      this.superAdminService.createDocument(colName, parsedObj).subscribe({
-        next: (res) => {
-          this.success = `➕ New document inserted into '${colName}' successfully.`;
-          this.editorModalOpen = false;
-          this.selectCollection(this.selectedCollection);
-          setTimeout(() => this.success = '', 5000);
-        },
-        error: () => this.modalError = 'Failed to insert document into MongoDB Atlas cluster.'
-      });
-    }
-  }
-
-  deleteDocument(docId: string): void {
-    if (!this.selectedCollection || !confirm(`Delete document '${docId}' from Atlas Cloud?`)) return;
-    this.error = ''; this.success = '';
-    const colName = this.selectedCollection.name;
-
-    this.superAdminService.deleteDocument(colName, docId).subscribe({
-      next: (res) => {
-        this.success = `🗑️ Document '${docId}' permanently deleted from Atlas Cloud.`;
-        this.selectCollection(this.selectedCollection);
-        setTimeout(() => this.success = '', 5000);
-      },
-      error: () => this.error = 'Failed to delete document from Atlas Cloud.'
-    });
   }
 }

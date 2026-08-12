@@ -152,9 +152,9 @@
           <button *ngIf="latestBill.status === 'UNPAID'" id="payNowBtn" class="btn btn-primary btn-lg" (click)="handlePay(latestBill._id)" [disabled]="paying === latestBill._id || latestBill.status === 'DISPUTED'">
             {{ paying === latestBill._id ? 'Redirecting...' : (latestBill.status === 'DISPUTED' ? 'Payment Frozen' : '💳 Pay Now') }}
           </button>
-          <a [href]="billService.pdfUrl(latestBill._id)" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm">
+          <button (click)="handleDownloadPdf(latestBill._id)" class="btn btn-secondary btn-sm">
             📄 Download PDF
-          </a>
+          </button>
         </div>
       </div>
     </div>

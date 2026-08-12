@@ -98,14 +98,19 @@ export const refresh = async (req, res, next) => {
   try {
     const { refreshToken } = req.cookies;
     if (!refreshToken) return res.status(401).json({ error: 'No refresh token' });
-    const accessToken = authService.refreshAccessToken(refreshToken);
-    res.json({ accessToken });
-  } catch {
-    res.status(401).json({ error: 'Invalid or expired refresh token' });
+    const tokens = await authService.rotateRefreshToken(refreshToken);
+    res.cookie('refreshToken', tokens.refreshToken, COOKIE_OPTIONS);
+    res.json({ accessToken: tokens.accessToken });
+  } catch (err) {
+    res.clearCookie('refreshToken');
+    res.status(err.status || 401).json({ error: err.message || 'Invalid or expired refresh token' });
   }
 };
 
-export const logout = (_req, res) => {
+export const logout = async (req, res) => {
+  if (req.user?.userId) {
+    await authService.revokeUserTokens(req.user.userId);
+  }
   res.clearCookie('refreshToken');
   res.json({ message: 'Logged out successfully' });
 };

@@ -4,12 +4,17 @@ import Bill from '../models/Bill.js';
 import Dispute from '../models/Dispute.js';
 import { generateMockData } from '../utils/mockData.js';
 
+import { checkAndTrackAiQuota } from '../utils/aiQuota.js';
+
 export const getChatResponse = async (req, res, next) => {
   try {
     const { message } = req.body;
-    if (!message) {
-      throw Object.assign(new Error('Message is required'), { status: 400 });
+    if (!message || typeof message !== 'string') {
+      throw Object.assign(new Error('Valid string message is required'), { status: 400 });
     }
+
+    // Enforce server-side AI quota per organization
+    await checkAndTrackAiQuota(req.user.organizationId, 500);
 
     const forceDemo = req.query.demo === 'true';
     const response = await aiService.getCopilotResponse(

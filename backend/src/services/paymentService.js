@@ -77,6 +77,8 @@ export const createCheckoutSession = async (organizationId, billId, userId, forc
   return { url: session.url, sessionId: session.id };
 };
 
+import StripeEventLog from '../models/StripeEventLog.js';
+
 export const handleWebhook = async (rawBody, signature) => {
   let event;
   try {
@@ -85,41 +87,78 @@ export const handleWebhook = async (rawBody, signature) => {
     throw Object.assign(new Error(`Webhook signature verification failed: ${err.message}`), { status: 400 });
   }
 
-  // IDEMPOTENCY CHECK — skip if already processed
-  const existing = await Payment.findOne({ stripeEventId: event.id });
-  if (existing) {
-    return { alreadyProcessed: true };
-  }
-
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const { billId, userId, organizationId } = session.metadata;
-
-    // Create immutable payment record
-    const payment = await Payment.create({
-      organizationId,
-      billId,
-      userId,
-      stripeSessionId: session.id,
-      stripePaymentIntentId: session.payment_intent,
-      stripeEventId: event.id, // idempotency key
-      amountInPaise: session.amount_total,
-      status: 'SUCCESS',
+  // ATOMIC IDEMPOTENCY CHECK — Use StripeEventLog with status tracking
+  let eventLog;
+  try {
+    eventLog = await StripeEventLog.create({
+      _id: event.id,
+      type: event.type,
+      status: 'PROCESSING',
       processedAt: new Date(),
     });
-
-    // Mark bill as paid
-    await Bill.findByIdAndUpdate(billId, { status: 'PAID' });
-
-    // Queue payment success notification
-    const [bill, user] = await Promise.all([
-      Bill.findById(billId),
-      User.findById(userId),
-    ]);
-    queuePaymentSuccessNotification(payment, bill, user).catch(console.error);
+  } catch (err) {
+    if (err.code === 11000) {
+      // Event record already exists
+      const existingLog = await StripeEventLog.findById(event.id);
+      if (existingLog && existingLog.status === 'PROCESSED') {
+        return { alreadyProcessed: true };
+      }
+      if (existingLog && existingLog.status === 'PROCESSING') {
+        // Stale processing recovery (if stuck over 5 mins)
+        const isStale = Date.now() - new Date(existingLog.updatedAt).getTime() > 5 * 60 * 1000;
+        if (!isStale) {
+          return { status: 'IN_FLIGHT' };
+        }
+      }
+      eventLog = existingLog;
+    } else {
+      throw err;
+    }
   }
 
-  return { received: true };
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const { billId, userId, organizationId } = session.metadata;
+
+      // Create immutable payment record
+      const payment = await Payment.create({
+        organizationId,
+        billId,
+        userId,
+        stripeSessionId: session.id,
+        stripePaymentIntentId: session.payment_intent,
+        stripeEventId: event.id,
+        amountInPaise: session.amount_total,
+        status: 'SUCCESS',
+        processedAt: new Date(),
+      });
+
+      // Mark bill as paid
+      await Bill.findByIdAndUpdate(billId, { status: 'PAID' });
+
+      // Queue payment success notification
+      const [bill, user] = await Promise.all([
+        Bill.findById(billId),
+        User.findById(userId),
+      ]);
+      queuePaymentSuccessNotification(payment, bill, user).catch(console.error);
+    }
+
+    if (eventLog) {
+      eventLog.status = 'PROCESSED';
+      await eventLog.save();
+    }
+    return { received: true };
+
+  } catch (err) {
+    if (eventLog) {
+      eventLog.status = 'FAILED';
+      eventLog.error = err.message;
+      await eventLog.save();
+    }
+    throw err;
+  }
 };
 
 /**

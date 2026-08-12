@@ -104,8 +104,12 @@ export const getBillsByOrg = async (organizationId, { status, page = 1, limit = 
   return { bills, total, page, totalPages: Math.ceil(total / limit) };
 };
 
-export const getBillById = async (organizationId, billId) => {
-  const bill = await Bill.findOne({ _id: billId, organizationId }).populate('userId', 'name email consumerId address');
+export const getBillById = async (organizationId, billId, user = null) => {
+  const query = { _id: billId, organizationId };
+  if (user && user.role === 'CONSUMER') {
+    query.userId = user.userId;
+  }
+  const bill = await Bill.findOne(query).populate('userId', 'name email consumerId address');
   if (!bill) throw Object.assign(new Error('Bill not found'), { status: 404 });
   return bill;
 };

@@ -102,9 +102,31 @@ export const registerConsumer = async ({
   });
 };
 
+import crypto from 'crypto';
+import { nanoid } from 'nanoid';
+import RefreshToken from '../models/RefreshToken.js';
+
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+export const issueTokenPair = async (userId, organizationId, role, existingFamilyId = null) => {
+  const familyId = existingFamilyId || nanoid();
+  const tokens = generateTokens(userId, organizationId, role, familyId);
+  const tokenHash = hashToken(tokens.refreshToken);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+  await RefreshToken.create({
+    userId,
+    familyId,
+    tokenHash,
+    expiresAt,
+  });
+
+  return { ...tokens, familyId };
+};
+
 export const login = async ({ email, password, orgSlug }) => {
   const org = await Organization.findOne({ slug: orgSlug, isActive: true });
-  if (!org) throw Object.assign(new Error('Organization not found'), { status: 404 });
+  if (!org) throw Object.assign(new Error('Invalid credentials'), { status: 401 });
 
   const user = await User.findOne({ organizationId: org._id, email: email.toLowerCase().trim(), isActive: true });
   if (!user) throw Object.assign(new Error('Invalid credentials'), { status: 401 });
@@ -112,7 +134,7 @@ export const login = async ({ email, password, orgSlug }) => {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw Object.assign(new Error('Invalid credentials'), { status: 401 });
 
-  const tokens = generateTokens(user._id.toString(), org._id.toString(), user.role);
+  const tokens = await issueTokenPair(user._id.toString(), org._id.toString(), user.role);
   return { user, org, tokens };
 };
 
@@ -124,12 +146,40 @@ export const loginSuperAdmin = async ({ email, password }) => {
   if (!valid) throw Object.assign(new Error('Invalid Super Admin credentials'), { status: 401 });
 
   const org = await Organization.findById(user.organizationId);
-  const tokens = generateTokens(user._id.toString(), org._id.toString(), user.role);
+  const tokens = await issueTokenPair(user._id.toString(), org._id.toString(), user.role);
   return { user, org, tokens };
 };
 
-export const refreshAccessToken = (refreshToken) => {
-  const payload = verifyRefreshToken(refreshToken);
-  const { accessToken } = generateTokens(payload.userId, payload.organizationId, payload.role);
-  return accessToken;
+export const rotateRefreshToken = async (rawRefreshToken) => {
+  let payload;
+  try {
+    payload = verifyRefreshToken(rawRefreshToken);
+  } catch {
+    throw Object.assign(new Error('Invalid or expired refresh token'), { status: 401 });
+  }
+
+  const tokenHash = hashToken(rawRefreshToken);
+  const tokenRecord = await RefreshToken.findOne({ tokenHash });
+
+  if (!tokenRecord) {
+    throw Object.assign(new Error('Invalid refresh token'), { status: 401 });
+  }
+
+  // REUSE DETECTION: If used or revoked token presented, revoke whole family
+  if (tokenRecord.isUsed || tokenRecord.isRevoked) {
+    await RefreshToken.updateMany({ familyId: tokenRecord.familyId }, { isRevoked: true });
+    throw Object.assign(new Error('Refresh token reuse detected. Family revoked.'), { status: 401 });
+  }
+
+  // ATOMIC ROTATION: Mark old token used
+  tokenRecord.isUsed = true;
+  await tokenRecord.save();
+
+  // Issue new token pair under same family
+  const newTokens = await issueTokenPair(payload.userId, payload.organizationId, payload.role, tokenRecord.familyId);
+  return newTokens;
+};
+
+export const revokeUserTokens = async (userId) => {
+  await RefreshToken.updateMany({ userId }, { isRevoked: true });
 };

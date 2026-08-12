@@ -531,8 +531,10 @@ Instructions:
     const response = await result.response;
 
     if (response.usageMetadata) {
+      console.log('🔥 [PROOF LOG] GOOGLE GEMINI 2.5 FLASH RESPONDED SUCCESSFULLY! Total Tokens Used:', response.usageMetadata.totalTokenCount);
       aiTokenManager.logUsage(response.usageMetadata.totalTokenCount || 210);
     } else {
+      console.log('🔥 [PROOF LOG] GOOGLE GEMINI 2.5 FLASH RESPONDED SUCCESSFULLY!');
       aiTokenManager.logUsage(185);
     }
 
