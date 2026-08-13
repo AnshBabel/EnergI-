@@ -1,0 +1,167 @@
+<app-app-layout>
+  <div class="page-header mb-6 flex-between">
+    <div>
+      <h1 class="page-title text-2xl font-bold">Audit Trail</h1>
+      <p class="text-sm text-gray-400">View and audit all administrative and security actions in your organization.</p>
+    </div>
+  </div>
+
+  <!-- Filters Toolbar -->
+  <div class="card p-4 mb-6 flex flex-wrap gap-4 items-center bg-slate-900 border border-slate-800 rounded-lg">
+    <div class="flex flex-col">
+      <label class="text-xs text-gray-400 mb-1">Action Type</label>
+      <select 
+        [(ngModel)]="selectedAction" 
+        (change)="applyFilters()"
+        class="input py-2 px-3 bg-slate-950 border border-slate-800 rounded text-sm text-gray-200">
+        <option value="">All Actions</option>
+        <option *ngFor="let item of actionsList" [value]="item.value">{{item.label}}</option>
+      </select>
+    </div>
+
+    <div class="flex flex-col">
+      <label class="text-xs text-gray-400 mb-1">Target Model</label>
+      <select 
+        [(ngModel)]="selectedTargetModel" 
+        (change)="applyFilters()"
+        class="input py-2 px-3 bg-slate-950 border border-slate-800 rounded text-sm text-gray-200">
+        <option value="">All Targets</option>
+        <option *ngFor="let item of targetModelsList" [value]="item.value">{{item.label}}</option>
+      </select>
+    </div>
+
+    <button 
+      (click)="resetFilters()" 
+      class="btn btn-secondary mt-5 py-2 px-4 rounded text-sm bg-slate-800 hover:bg-slate-700 text-gray-200 transition">
+      Reset Filters
+    </button>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="alert alert-error mb-6 bg-red-950 border border-red-800 p-4 rounded text-red-200 text-sm">
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex justify-center p-12">
+    <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading && !error">
+    <!-- Empty State -->
+    <div *ngIf="logs.length === 0" class="card p-12 text-center bg-slate-900 border border-slate-800 rounded-lg">
+      <h3 class="text-lg font-bold text-gray-300 mb-2">No Audit Events Yet</h3>
+      <p class="text-sm text-gray-500">Administrative actions will appear here as they occur.</p>
+    </div>
+
+    <!-- Audit List -->
+    <div *ngIf="logs.length > 0" class="audit-timeline">
+      <div 
+        *ngFor="let log of logs" 
+        (click)="selectLog(log)"
+        class="audit-item">
+        <div class="flex justify-between items-start flex-wrap gap-2">
+          <div>
+            <span class="badge {{ getBadgeClass(log.action) }} mr-2">{{ log.action }}</span>
+            <span class="text-xs text-gray-500">{{ log.timestamp | date:'dd MMM yyyy · HH:mm:ss' }}</span>
+            
+            <div class="mt-2 text-sm text-gray-300 font-medium">
+              Actor: <span class="text-white">{{ log.actorId?.name || 'Unknown' }}</span> 
+              <span class="text-xs text-gray-500">({{ log.actorRole }})</span>
+            </div>
+
+            <div class="text-xs text-gray-400 mt-1">
+              Target ID: <span class="font-mono text-gray-500">{{ log.targetId || 'N/A' }}</span>
+              <span *ngIf="log.targetModel" class="ml-2 text-gray-500">[{{ log.targetModel }}]</span>
+            </div>
+          </div>
+          
+          <div class="text-right">
+            <span class="text-xs text-slate-500 font-mono block">IP: {{ log.ipAddress || 'Unknown' }}</span>
+            <span class="text-xs text-slate-500 font-mono block mt-1">Req: {{ log.requestId || 'Unknown' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="logs.length > 0" class="flex-between mt-6 bg-slate-900 border border-slate-800 p-4 rounded-lg">
+      <span class="text-xs text-gray-400">Showing page {{ page }} of {{ totalPages }} ({{ total }} total logs)</span>
+      
+      <div class="flex gap-2">
+        <button 
+          [disabled]="page === 1" 
+          (click)="prevPage()"
+          class="btn btn-secondary py-1 px-3 rounded text-xs bg-slate-800 hover:bg-slate-700 text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+          Previous
+        </button>
+        <button 
+          [disabled]="page === totalPages" 
+          (click)="nextPage()"
+          class="btn btn-secondary py-1 px-3 rounded text-xs bg-slate-800 hover:bg-slate-700 text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Panel / Drawer -->
+  <div *ngIf="selectedLog">
+    <div class="backdrop" (click)="closeDetails()"></div>
+    <div class="detail-overlay">
+      <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+        <h2 class="text-lg font-bold text-white">Event details</h2>
+        <button (click)="closeDetails()" class="text-gray-400 hover:text-white">&times;</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs text-gray-400 block font-semibold uppercase">Action</label>
+          <span class="badge {{ getBadgeClass(selectedLog.action) }} mt-1">{{ selectedLog.action }}</span>
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-400 block font-semibold uppercase">Timestamp</label>
+          <span class="text-sm text-white block mt-1">{{ selectedLog.timestamp | date:'dd MMM yyyy · HH:mm:ss' }}</span>
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-400 block font-semibold uppercase">Actor</label>
+          <span class="text-sm text-white block mt-1">{{ selectedLog.actorId?.name || 'Unknown' }}</span>
+          <span class="text-xs text-gray-500 font-mono block">{{ selectedLog.actorId?.email || '' }}</span>
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-400 block font-semibold uppercase">Role</label>
+          <span class="text-sm text-white block mt-1">{{ selectedLog.actorRole }}</span>
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-400 block font-semibold uppercase">IP Address</label>
+          <span class="text-sm text-slate-300 font-mono block mt-1">{{ selectedLog.ipAddress || 'Unknown' }}</span>
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-400 block font-semibold uppercase">Request ID</label>
+          <span class="text-sm text-slate-300 font-mono block mt-1">{{ selectedLog.requestId || 'Unknown' }}</span>
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-400 block font-semibold uppercase">User Agent</label>
+          <span class="text-xs text-slate-400 block mt-1 leading-relaxed">{{ selectedLog.userAgent || 'Unknown' }}</span>
+        </div>
+
+        <div *ngIf="selectedLog.before">
+          <label class="text-xs text-gray-400 block font-semibold uppercase mb-1">State Before</label>
+          <pre>{{ formatJson(selectedLog.before) }}</pre>
+        </div>
+
+        <div *ngIf="selectedLog.after">
+          <label class="text-xs text-gray-400 block font-semibold uppercase mb-1">State After</label>
+          <pre>{{ formatJson(selectedLog.after) }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-app-layout>
