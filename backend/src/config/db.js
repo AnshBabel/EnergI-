@@ -13,3 +13,7 @@ export const connectDB = async () => {
     setTimeout(connectDB, 5000);
   }
 };
+
+export const isDbConnected = () => {
+  return mongoose.connection.readyState === 1;
+};

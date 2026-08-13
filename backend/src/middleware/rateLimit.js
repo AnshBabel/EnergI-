@@ -18,3 +18,12 @@ export const apiRateLimit = rateLimit({
   message: { error: 'Rate limit exceeded. Please slow down.' },
 });
 
+export const aiRateLimit = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10, // Max 10 AI invocations per minute per client
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'AI request rate limit exceeded. Please wait 1 minute.' },
+});
+
+
