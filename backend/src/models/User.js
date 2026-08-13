@@ -16,7 +16,20 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email address']
     },
-    passwordHash: { type: String, required: true },
+    passwordHash: { 
+      type: String, 
+      required: function() { return this.authProvider === 'LOCAL'; } 
+    },
+    authProvider: {
+      type: String,
+      enum: ['LOCAL', 'GOOGLE'],
+      default: 'LOCAL'
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true
+    },
     consumerId: {
       type: String,
       unique: true,

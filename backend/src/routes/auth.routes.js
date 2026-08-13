@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer'; // New: Required for file uploads
 import path from 'path';
 import * as authController from '../controllers/auth.controller.js';
+import * as googleAuthController from '../controllers/googleAuth.controller.js';
 import { authenticate } from '../middleware/auth.js';
 import { authRateLimit } from '../middleware/rateLimit.js';
 
@@ -49,6 +50,8 @@ router.post(
 );
 
 router.post('/login', authRateLimit, authController.login);
+router.post('/google', authRateLimit, googleAuthController.loginWithGoogle);
+router.get('/google/client-id', googleAuthController.getGoogleClientId);
 router.post('/superadmin/login', authRateLimit, authController.loginSuperAdmin);
 router.post('/refresh', authController.refresh);
 router.post('/logout', authController.logout);
