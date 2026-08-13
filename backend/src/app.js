@@ -5,8 +5,12 @@ import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { correlationMiddleware } from './middleware/correlation.js';
+import { logger } from './utils/logger.js';
+import { apiRateLimit } from './middleware/rateLimit.js';
 
 import fs from 'fs';
+import { isDbConnected } from './config/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,13 +25,18 @@ import notificationRoutes from './routes/notification.routes.js';
 import disputeRoutes from './routes/dispute.routes.js';
 import userRoutes from './routes/user.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import auditLogRoutes from './routes/auditLog.routes.js';
 import superAdminRoutes from './routes/superadmin.routes.js';
+import backupRoutes from './routes/backup.routes.js';
 
 import { checkMaintenance } from './middleware/maintenance.js';
 
 import mongoSanitize from 'express-mongo-sanitize';
 
 const app = express();
+
+// Track correlation ID for all incoming requests
+app.use(correlationMiddleware);
 
 // Security headers (Tailored for Angular 18, Google Fonts, and Stripe)
 app.use(helmet({
@@ -83,8 +92,9 @@ app.use(mongoSanitize());
 
 app.use(cookieParser());
 
-// Maintenance Check (Global for API)
+// Maintenance Check & Rate Limiting (Global for API)
 app.use('/api', checkMaintenance);
+app.use('/api', apiRateLimit);
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
@@ -97,6 +107,8 @@ app.use('/api/v1/disputes', disputeRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1/superadmin', superAdminRoutes);
+app.use('/api/v1/audit-logs', auditLogRoutes);
+app.use('/api/v1/org/backup', backupRoutes);
 
 // Google Search Console Verification Endpoint
 app.get('/googleca46d16ff5497787.html', (_req, res) => {
@@ -104,9 +116,30 @@ app.get('/googleca46d16ff5497787.html', (_req, res) => {
   res.send('google-site-verification: googleca46d16ff5497787.html');
 });
 
-// Health check
+// Health check (Liveness)
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/health/liveness', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Health check (Readiness)
+app.get('/health/readiness', (_req, res) => {
+  const dbConnected = isDbConnected();
+  if (!dbConnected) {
+    return res.status(503).json({
+      status: 'error',
+      database: 'disconnected',
+      timestamp: new Date().toISOString()
+    });
+  }
+  res.json({
+    status: 'ok',
+    database: 'connected',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Catch-all for Angular routes (must come after API routes)
@@ -127,20 +160,49 @@ app.get('*', (req, res, next) => {
 
 // 404 handler (for API routes only if next() was called)
 app.use((_req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({
+    success: false,
+    error: {
+      code: 'NOT_FOUND',
+      message: 'Route not found',
+      requestId: res.getHeader('X-Request-ID') || 'unknown'
+    }
+  });
 });
 
 // Global error handler
-app.use((err, _req, res, _next) => {
-  console.error('🔥 Global Error Handler:', err.message);
+app.use((err, req, res, _next) => {
+  const status = err.status || 500;
+  const requestId = req.id || res.getHeader('X-Request-ID') || 'unknown';
+  
+  let category = 'INTERNAL_ERROR';
+  if (status === 400) category = 'VALIDATION_ERROR';
+  else if (status === 401) category = 'AUTHENTICATION_ERROR';
+  else if (status === 403) category = 'AUTHORIZATION_ERROR';
+  else if (status === 404) category = 'NOT_FOUND';
+  else if (status === 409) category = 'CONFLICT';
+  else if (status === 429) category = 'RATE_LIMITED';
+
+  // Log detailed server-side error with logger
+  logger.error(`Error on ${req.method} ${req.url}: ${err.message}`, {
+    category,
+    statusCode: status,
+    errorMessage: err.message,
+    stack: err.stack
+  });
+
   if (res.headersSent) {
-    console.warn('⚠️ Headers already sent, closing connection.');
     return res.end();
   }
-  const status = err.status || 500;
+
   res.status(status).json({
-    error: err.message || 'Internal Server Error',
-    ...(env.NODE_ENV === 'development' && { stack: err.stack }),
+    success: false,
+    error: {
+      code: category,
+      message: status === 500 ? 'An internal server error occurred' : err.message,
+      requestId,
+      ...(env.NODE_ENV === 'development' && { stack: err.stack })
+    }
   });
 });
 
