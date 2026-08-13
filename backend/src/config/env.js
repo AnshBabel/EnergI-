@@ -16,6 +16,8 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
   FRONTEND_URL: z.string().url().default('http://localhost:4200'),
   BACKEND_URL: z.string().url().default('http://localhost:5000'),
+  BACKUP_ENCRYPTION_KEY: z.string().min(32, 'BACKUP_ENCRYPTION_KEY must be at least 32 characters').default('development_only_backup_key_32_bytes_long!'),
+  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required').default('mock_google_client_id_for_dev_only.apps.googleusercontent.com'),
 });
 
 const parsed = envSchema.safeParse(process.env);
