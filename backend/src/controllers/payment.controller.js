@@ -1,4 +1,6 @@
 import * as paymentService from '../services/paymentService.js';
+import * as auditLogService from '../services/auditLogService.js';
+import Payment from '../models/Payment.js';
 
 export const createCheckout = async (req, res, next) => {
   try {
@@ -37,16 +39,27 @@ export const listAll = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-
 export const refund = async (req, res, next) => {
   try {
     const { paymentId } = req.params;
     const forceDemo = req.query.demo === 'true';
+    const beforePayment = await Payment.findOne({ _id: paymentId, organizationId: req.user.organizationId });
+    
     const result = await paymentService.refundPayment(
       req.user.organizationId,
       paymentId,
       forceDemo
     );
+    
+    await auditLogService.record({
+      req,
+      action: 'PAYMENT_REFUNDED',
+      targetModel: 'Payment',
+      targetId: paymentId,
+      before: beforePayment,
+      after: { refundId: result.refundId, status: 'REFUNDED' }
+    });
+
     res.json(result);
   } catch (err) { next(err); }
 };

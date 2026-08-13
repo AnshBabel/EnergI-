@@ -3,6 +3,7 @@ import * as userService from '../services/userService.js';
 import { generateBillPdf } from '../utils/pdfService.js';
 import { exportBillsCsv } from '../utils/exportService.js';
 import Organization from '../models/Organization.js';
+import * as auditLogService from '../services/auditLogService.js';
 
 export const generate = async (req, res, next) => {
   try {
@@ -15,6 +16,15 @@ export const generate = async (req, res, next) => {
       req.params.userId,
       req.body
     );
+    
+    await auditLogService.record({
+      req,
+      action: 'BILL_CREATED',
+      targetModel: 'Bill',
+      targetId: bill._id,
+      after: bill,
+    });
+
     res.status(201).json({ bill });
   } catch (err) { next(err); }
 };
@@ -105,6 +115,13 @@ export const runCycle = async (req, res, next) => {
       return res.status(400).json({ error: 'Missing required fields: month and year' });
     }
     const result = await cronService.runBillingCycle(req.user.organizationId, { month, year, forceDemo });
+    
+    await auditLogService.record({
+      req,
+      action: 'BILL_CYCLE_RUN',
+      after: { month, year, ...result }
+    });
+
     res.json(result);
   } catch (err) { next(err); }
 };
