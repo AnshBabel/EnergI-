@@ -248,10 +248,18 @@ export class LoginComponent implements OnInit {
         client_id: clientId,
         callback: this.handleGoogleCredentialResponse.bind(this)
       });
-      google.accounts.id.renderButton(
-        document.getElementById('google-signin-btn'),
-        { theme: 'outline', size: 'large', width: '380px' }
-      );
+      // Wrap in setTimeout to ensure Angular template rendering is complete
+      setTimeout(() => {
+        const btnContainer = document.getElementById('google-signin-btn');
+        if (btnContainer) {
+          google.accounts.id.renderButton(
+            btnContainer,
+            { theme: 'outline', size: 'large', width: '380px' }
+          );
+        } else {
+          console.warn('Google sign-in button element container not found in DOM');
+        }
+      }, 100);
     }
   }
 
