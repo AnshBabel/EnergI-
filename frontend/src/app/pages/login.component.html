@@ -114,7 +114,17 @@
       </button>
     </form>
 
-    <p class="text-muted mt-4" style="text-align: center;">
+    <div class="google-separator mt-6 mb-6" style="display: flex; align-items: center; justify-content: center; width: 100%; gap: 10px; margin-top: 1.5rem; margin-bottom: 1.5rem;">
+      <hr style="flex-grow: 1; border: 0; border-top: 1px solid var(--color-border); opacity: 0.5;">
+      <span style="font-size: 11px; color: var(--color-text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">OR</span>
+      <hr style="flex-grow: 1; border: 0; border-top: 1px solid var(--color-border); opacity: 0.5;">
+    </div>
+
+    <div style="display: flex; justify-content: center; width: 100%; margin-bottom: 1rem;">
+      <div id="google-signin-btn"></div>
+    </div>
+
+    <p class="text-muted mt-4" style="text-align: center; margin-top: 1rem;">
       New organization? <a routerLink="/register" style="color: var(--color-primary-light);">Register here</a>
     </p>
   </div>

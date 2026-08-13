@@ -41,6 +41,21 @@ export class AuthService {
     );
   }
 
+  getGoogleClientId(): Observable<{ clientId: string }> {
+    return this.http.get<{ clientId: string }>(`${this.base}/google/client-id`);
+  }
+
+  loginWithGoogle(idToken: string, orgSlug?: string): Observable<any> {
+    return this.http.post<any>(`${this.base}/google`, { idToken, orgSlug }).pipe(
+      tap((res) => {
+        localStorage.setItem('accessToken', res.accessToken);
+        this.authState.setUser(res.user);
+        this.authState.setOrg(res.org);
+        this.applyBranding(res.org);
+      })
+    );
+  }
+
   loginSuperAdmin(data: any): Observable<any> {
     return this.http.post<any>(`${this.base}/superadmin/login`, data).pipe(
       tap((res) => {

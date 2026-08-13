@@ -213,6 +213,66 @@ export class LoginComponent implements OnInit {
         this.form.orgSlug = t.slug;
       }
     });
+
+    // Fetch and initialize Google Authentication
+    this.authService.getGoogleClientId().subscribe({
+      next: (res) => {
+        if (res.clientId) {
+          this.loadGoogleScript(res.clientId);
+        }
+      },
+      error: (err) => {
+        console.warn('Google Auth Client ID could not be loaded:', err.message);
+      }
+    });
+  }
+
+  private loadGoogleScript(clientId: string): void {
+    if (document.getElementById('google-gsi-script')) {
+      this.initializeGoogleSignIn(clientId);
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'google-gsi-script';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => this.initializeGoogleSignIn(clientId);
+    document.head.appendChild(script);
+  }
+
+  private initializeGoogleSignIn(clientId: string): void {
+    const google = (window as any).google;
+    if (google?.accounts?.id) {
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: this.handleGoogleCredentialResponse.bind(this)
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('google-signin-btn'),
+        { theme: 'outline', size: 'large', width: '380px' }
+      );
+    }
+  }
+
+  private handleGoogleCredentialResponse(response: any): void {
+    const idToken = response.credential;
+    this.loading = true;
+    this.error = '';
+
+    this.authService.loginWithGoogle(idToken, this.form.orgSlug).subscribe({
+      next: (data) => {
+        const route = data.user.role === 'ADMIN' ? '/admin/dashboard' : '/consumer/dashboard';
+        this.router.navigate([route]);
+      },
+      error: (err) => {
+        this.error = err.error?.error || 'Google login failed.';
+        this.loading = false;
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
   }
 
   togglePassword(): void {
