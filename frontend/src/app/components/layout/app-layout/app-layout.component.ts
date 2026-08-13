@@ -1,9 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthState, User, Org } from '../../../state/auth.state';
 import { AuthService } from '../../../services/auth.service';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { ThemeService } from '../../../services/theme.service';
 import { ShowcaseService } from '../../../services/showcase.service';
 import { AiCopilotComponent } from '../../ai-copilot/ai-copilot.component';
@@ -42,6 +43,7 @@ import { AiCopilotComponent } from '../../ai-copilot/ai-copilot.component';
 export class AppLayoutComponent implements OnInit, OnDestroy {
   user: User | null = null;
   org: Org | null = null;
+  isSidebarOpen: boolean = false;
   private sub = new Subscription();
 
   constructor(
@@ -57,6 +59,23 @@ export class AppLayoutComponent implements OnInit, OnDestroy {
     this.sub.add(this.authState.org$.subscribe(org => this.org = org));
     // Listen for showcase toggle to trigger UI refresh
     this.sub.add(this.showcaseService.showcaseMode$.subscribe());
+
+    // Auto-close sidebar on routing completed on mobile
+    this.sub.add(
+      this.router.events.pipe(
+        filter(event => event instanceof NavigationEnd)
+      ).subscribe(() => {
+        this.closeSidebar();
+      })
+    );
+  }
+
+  toggleSidebar(): void {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
+
+  closeSidebar(): void {
+    this.isSidebarOpen = false;
   }
 
   get displayUser(): any {

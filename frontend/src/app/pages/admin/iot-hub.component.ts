@@ -34,7 +34,7 @@ import { Subscription, interval } from 'rxjs';
           <p>Enable Smart Metering for consumers in the Consumers section to see them here.</p>
         </div>
 
-        <div class="grid col-3 gap-6" [@staggerList] *ngIf="meters.length > 0">
+        <div class="grid-3 mb-6" [@staggerList] *ngIf="meters.length > 0">
           <div *ngFor="let m of meters" class="card stagger-item live-meter-card">
             <div class="flex-between mb-4">
               <div class="badge badge-success" style="font-size: 10px; padding: 2px 8px;">

@@ -1,5 +1,19 @@
-<div class="app-layout">
-  <aside class="sidebar">
+<div class="app-layout" [class.mobile-sidebar-active]="isSidebarOpen">
+  
+  <header class="mobile-header">
+    <button class="hamburger-btn" (click)="toggleSidebar()" aria-label="Toggle Navigation Menu">
+      <span>☰</span>
+    </button>
+    <div class="mobile-logo">
+      <div class="logo-mark-sm">E</div>
+      <span>{{ org?.name || 'EnergI' }}</span>
+    </div>
+    <div style="width: 32px;"></div>
+  </header>
+
+  <div class="sidebar-backdrop" *ngIf="isSidebarOpen" (click)="closeSidebar()"></div>
+
+  <aside class="sidebar" [class.sidebar-open]="isSidebarOpen">
     <div class="sidebar-logo">
       <div class="logo-mark">E</div>
       <span class="logo-text">{{ org?.name || 'EnergI' }}</span>

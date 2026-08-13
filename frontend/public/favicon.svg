@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <circle cx="12" cy="12" r="11" fill="#0A0A10" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <!-- E skeleton -->
+  <path d="M16 6 H8 V18 H16" stroke="#F1F0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Energy Pulse middle bar -->
+  <path d="M8 12 H11 L12.5 9 L13.5 15 L14.5 12 H16" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Connected grid nodes -->
+  <circle cx="16" cy="6" r="1.2" fill="#10B981"/>
+  <circle cx="16" cy="18" r="1.2" fill="#10B981"/>
+</svg>

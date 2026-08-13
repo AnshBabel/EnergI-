@@ -149,6 +149,13 @@ export class LandingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showDemoModal = false;
   }
 
+  scrollToTop(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   activateShowcaseAndRoute(route: string): void {
     if (!this.showcaseService.isShowcaseActive) {
       this.showcaseService.toggleShowcaseMode();

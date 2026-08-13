@@ -2,13 +2,15 @@
   <!-- Navbar -->
   <nav class="landing-nav">
     <div class="nav-container">
-      <div class="nav-logo">
-        <svg class="energi-logo-svg" viewBox="0 0 40 40" fill="none" stroke="currentColor">
-          <circle cx="8" cy="10" r="2" fill="currentColor"/>
-          <circle cx="8" cy="30" r="2" fill="currentColor"/>
-          <path d="M30 10 H12 V30 H30" stroke-width="3.5" stroke-linecap="square"/>
-          <path d="M12 20 H22" stroke-width="3.5" stroke-linecap="square"/>
-          <path d="M4 24 L16 8 L22 22 L36 6" stroke="#10B981" stroke-width="2.5" class="logo-waveform" fill="none" stroke-linejoin="miter" stroke-linecap="square" />
+      <div class="nav-logo" (click)="scrollToTop($event)">
+        <svg class="energi-logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <!-- E skeleton -->
+          <path d="M18 4 H6 V20 H18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Energy Pulse middle bar -->
+          <path d="M6 12 H10 L12 8 L14 16 L16 12 H18" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="logo-waveform"/>
+          <!-- Connected grid nodes -->
+          <circle cx="18" cy="4" r="1.5" fill="#10B981"/>
+          <circle cx="18" cy="20" r="1.5" fill="#10B981"/>
         </svg>
         <span class="logo-text">EnergI</span>
       </div>
@@ -475,31 +477,49 @@
   <!-- Footer / Final CTA -->
   <footer class="landing-footer">
     <svg class="footer-grid-svg" viewBox="0 0 1000 200" preserveAspectRatio="xMidYMid slice">
-      <path d="M0,100 L200,50 L400,150 L600,100 L800,150 L1000,50" class="flow-line" />
-      <circle cx="200" cy="50" r="4" class="node health-green breathing"/>
-      <circle cx="400" cy="150" r="4" class="node health-cyan breathing"/>
-      <circle cx="600" cy="100" r="6" class="node health-green breathing"/>
-      <circle cx="800" cy="150" r="4" class="node health-green breathing"/>
+      <path d="M0,100 L200,50 L400,150 L600,100 L800,150 L1000,50" class="flow-line" style="opacity: 0.15;" />
+      <circle cx="200" cy="50" r="3" fill="#10B981" style="opacity: 0.3;"/>
+      <circle cx="600" cy="100" r="4" fill="#06B6D4" style="opacity: 0.3;"/>
+      <!-- Slow moving data points -->
+      <circle cx="0" cy="100" r="2" fill="#06B6D4">
+        <animate attributeName="cx" values="0;200;400;600;800;1000" dur="20s" repeatCount="indefinite"/>
+        <animate attributeName="cy" values="100;50;150;100;150;50" dur="20s" repeatCount="indefinite"/>
+      </circle>
     </svg>
+    
     <div class="footer-cta">
       <h2 class="huge-headline">READY TO EXPERIENCE ENERGI?</h2>
+      <p class="footer-sub-text">Connect your energy data. Understand your grid. Let intelligence drive the next decision.</p>
       <div class="footer-actions">
         <button (click)="openDemoModal()" class="btn btn-lg btn-primary glow-btn">EXPLORE LIVE DEMO &rarr;</button>
-        <a routerLink="/login" class="btn btn-lg btn-secondary">SIGN IN</a>
+        <a routerLink="/login" class="btn btn-lg btn-secondary-quiet">SIGN IN</a>
       </div>
     </div>
+
+    <!-- System Ready Signal -->
+    <div class="footer-signals" style="justify-content: center;">
+      <div class="system-signal-bar">
+        <span class="signal-dot">●</span> LIVE INTELLIGENCE &middot; SMART GRID &middot; AUTOMATED BILLING
+      </div>
+    </div>
+
     <div class="footer-bottom">
-      <div class="fb-brand">
-        <svg class="energi-logo-svg small-logo" viewBox="0 0 40 40" fill="none" stroke="currentColor">
-          <circle cx="8" cy="10" r="2" fill="currentColor"/>
-          <circle cx="8" cy="30" r="2" fill="currentColor"/>
-          <path d="M30 10 H12 V30 H30" stroke-width="3.5" stroke-linecap="square"/>
-          <path d="M12 20 H22" stroke-width="3.5" stroke-linecap="square"/>
-          <path d="M4 24 L16 8 L22 22 L36 6" stroke="#10B981" stroke-width="2.5" class="logo-waveform" fill="none" stroke-linejoin="miter" stroke-linecap="square" />
+      <div class="fb-brand" (click)="scrollToTop($event)" style="cursor: pointer;">
+        <svg class="energi-logo-svg small-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <!-- E skeleton -->
+          <path d="M18 4 H6 V20 H18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Energy Pulse middle bar -->
+          <path d="M6 12 H10 L12 8 L14 16 L16 12 H18" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="logo-waveform"/>
+          <!-- Connected grid nodes -->
+          <circle cx="18" cy="4" r="1.5" fill="#10B981"/>
+          <circle cx="18" cy="20" r="1.5" fill="#10B981"/>
         </svg>
         <span class="logo-text">EnergI</span>
       </div>
-      <div class="fb-copy">&copy; 2026 EnergI Systems. All rights reserved. Representative demo data used for visual demonstration.</div>
+      <div class="fb-copy">
+        <div class="fb-copy-tagline">Smart Utility Billing & Energy Management Platform</div>
+        &copy; 2026 EnergI Systems. Representative demo data used for visual demonstration.
+      </div>
       <div class="fb-links">
         <a routerLink="/login">Sign In</a>
         <a routerLink="/register">Register</a>
