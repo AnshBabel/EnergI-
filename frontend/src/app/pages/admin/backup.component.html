@@ -1,0 +1,92 @@
+<app-app-layout>
+  <div class="page-header mb-6">
+    <h1 class="page-title text-2xl font-bold">Backup & Recovery</h1>
+    <p class="text-sm text-gray-400">Export and verify encrypted backup archives for disaster readiness auditing.</p>
+  </div>
+
+  <!-- Deferral Alert -->
+  <div class="alert bg-amber-950 border border-amber-800 p-4 rounded mb-6 text-amber-200 text-sm">
+    <strong class="font-bold">Notice:</strong> Full destructive database restore is intentionally deferred in this phase to prevent data corruption. Only secure export and cryptographic archive verification are supported.
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Export Panel -->
+    <div class="backup-box flex flex-col justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-white mb-3">Export Encrypted Backup</h2>
+        <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+          Generates an authenticated, AES-256-GCM encrypted backup file containing your organization's business records (consumers, tariffs, bills, disputes, and payments).
+        </p>
+        
+        <div class="bg-slate-900 border border-slate-800 p-3 rounded mb-6 text-xs text-slate-400 space-y-2">
+          <div>🚫 Excluded: Passwords, JWTs, and refresh tokens.</div>
+          <div>🚫 Excluded: Stripe webhook secrets and payment API keys.</div>
+          <div>🔒 Encrypted using derived server-side keys.</div>
+        </div>
+      </div>
+
+      <div>
+        <div *ngIf="error" class="alert alert-error mb-4 bg-red-950 border border-red-800 p-3 rounded text-red-200 text-xs">
+          {{ error }}
+        </div>
+        <div *ngIf="success" class="alert alert-success mb-4 status-panel text-xs text-emerald-300">
+          {{ success }}
+        </div>
+
+        <button 
+          [disabled]="exporting"
+          (click)="triggerBackup()"
+          class="btn btn-primary w-full py-3 px-4 rounded font-bold bg-primary hover:bg-primary-dark transition text-white flex justify-center items-center disabled:opacity-50">
+          <span *ngIf="exporting" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></span>
+          {{ exporting ? 'Encrypting & Generating...' : 'Create Encrypted Backup' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Verify Panel -->
+    <div class="backup-box">
+      <h2 class="text-lg font-bold text-white mb-3">Inspect & Verify Backup</h2>
+      <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+        Upload an encrypted EnergI backup file to verify its integrity, authenticate the cryptographic tag, and inspect metadata.
+      </p>
+
+      <div class="mb-6">
+        <label class="btn btn-secondary cursor-pointer py-3 px-4 w-full text-center rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white font-bold block transition">
+          <span *ngIf="verifying" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2 inline-block"></span>
+          {{ verifying ? 'Decrypting & Verifying...' : 'Select Backup File' }}
+          <input 
+            type="file" 
+            accept=".json"
+            (change)="handleFileSelect($event)"
+            [disabled]="verifying"
+            class="hidden" />
+        </label>
+      </div>
+
+      <div *ngIf="verifyError" class="alert alert-error bg-red-950 border border-red-800 p-3 rounded text-red-200 text-xs">
+        {{ verifyError }}
+      </div>
+
+      <!-- Verification Results -->
+      <div *ngIf="validationResult" class="status-panel mt-4 space-y-3">
+        <div class="text-emerald-400 font-bold text-sm">✓ Backup Cryptographically Authenticated</div>
+        
+        <div class="text-xs text-gray-300 space-y-1">
+          <div><span class="text-gray-400">Created At:</span> {{ validationResult.createdAt | date:'dd MMM yyyy · HH:mm:ss' }}</div>
+          <div><span class="text-gray-400">Tenant Match:</span> {{ validationResult.organizationId }}</div>
+        </div>
+
+        <div class="border-t border-emerald-800/40 pt-2 mt-2">
+          <div class="text-xs font-semibold text-emerald-400 mb-1">Archive Record Counts:</div>
+          <div class="grid grid-cols-2 gap-2 text-xs text-gray-300 font-mono">
+            <div>👥 Consumers: {{ validationResult.recordCounts.users }}</div>
+            <div>⚡ Tariffs: {{ validationResult.recordCounts.tariffs }}</div>
+            <div>🧾 Bills: {{ validationResult.recordCounts.bills }}</div>
+            <div>💸 Payments: {{ validationResult.recordCounts.payments }}</div>
+            <div>⚠️ Disputes: {{ validationResult.recordCounts.disputes }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-app-layout>
