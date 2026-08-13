@@ -1,4 +1,5 @@
 import { verifyAccessToken } from '../utils/jwt.js';
+import { loggerStorage } from '../utils/logger.js';
 
 export const authenticate = (req, res, next) => {
   let token = null;
@@ -20,6 +21,12 @@ export const authenticate = (req, res, next) => {
       isImpersonated: !!payload.isImpersonated,
       impersonatorId: payload.impersonatorId || null,
     };
+
+    // Track organizationId in the logging store
+    const store = loggerStorage.getStore();
+    if (store) {
+      store.organizationId = payload.organizationId;
+    }
 
     // Track activity in background
     if (process.env.NODE_ENV !== 'test') {
